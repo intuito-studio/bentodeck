@@ -3,9 +3,6 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "../logger.js";
 
-const DATA_DIR = process.env.BENTODECK_DATA_DIR ?? "./data";
-const DB_PATH = join(DATA_DIR, "bentodeck.sqlite");
-
 let dbInstance: Database.Database | null = null;
 
 const SCHEMA = `
@@ -67,13 +64,17 @@ const SCHEMA = `
 
 export function initDb(): Database.Database {
   if (dbInstance) return dbInstance;
-  mkdirSync(DATA_DIR, { recursive: true });
-  const db = new Database(DB_PATH);
+  // Resolved at call time so tests/scripts can override BENTODECK_DATA_DIR
+  // before initDb() runs.
+  const dataDir = process.env.BENTODECK_DATA_DIR ?? "./data";
+  const dbPath = join(dataDir, "bentodeck.sqlite");
+  mkdirSync(dataDir, { recursive: true });
+  const db = new Database(dbPath);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA);
   dbInstance = db;
-  log.info(`SQLite initialized at ${DB_PATH}`);
+  log.info(`SQLite initialized at ${dbPath}`);
   return db;
 }
 
