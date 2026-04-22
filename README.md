@@ -109,8 +109,145 @@ The durable framing: **"Claude Desktop's output layer for Apple devices — expr
 
 ## Quickstart
 
-*(To be filled in as we build.)*
+### Prerequisites
+
+- macOS with Xcode 16+ (tested on Xcode 26.3)
+- Node 20+
+- Physical iPhone or iOS 17+ simulator
+- An Anthropic API key with Opus 4.7 access
+- Claude Desktop with MCP support (for the hero flow)
+- [xcodegen](https://github.com/yonaskolb/XcodeGen) — `brew install xcodegen`
+
+### 1. Backend
+
+```bash
+cd server
+npm install
+cp .env.example .env    # add your ANTHROPIC_API_KEY
+npm run dev             # starts HTTP + MCP stdio + mock demo API + poll scheduler
+```
+
+The server listens on `http://localhost:3737` for the iOS app, and on
+stdio for Claude Desktop's MCP connection.
+
+### 2. iOS
+
+```bash
+cd ios
+xcodegen generate
+open BentoDeck.xcodeproj
+```
+
+In Xcode:
+
+1. Select the `BentoDeck` target → **Signing & Capabilities** → set Team to your free personal Apple ID.
+2. Do the same for the `BentoDeckWidget` target.
+3. If building for a physical iPhone, edit `Sources/Shared/Config.swift` and replace `http://localhost:3737` with your Mac's LAN IP (e.g. `http://192.168.1.42:3737`).
+4. Build + run to your iPhone or simulator.
+5. Long-press your Home Screen → tap `+` → search "BentoDeck" → add the small or medium widget. (Or the rectangular Lock Screen widget from the Lock Screen customization UI.)
+
+### 3. Claude Desktop (the magical part)
+
+Add BentoDeck to your Claude Desktop MCP config — usually at
+`~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bentodeck": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/bentodeck/server/src/index.ts"],
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop. It should list `bentodeck` under your connected MCP servers.
+
+> Only run ONE instance of the backend. If you've started it with `npm run dev`, Claude Desktop will refuse to connect (port conflict). For the clean demo, let Claude Desktop be the launcher — quit `npm run dev` first.
+
+### 4. Talk to Claude
+
+```
+Show me Stripe MRR, today's signups, and critical errors
+on my Home Screen. Use the /demo/* endpoints on localhost.
+```
+
+Claude Desktop calls BentoDeck's MCP tools (`create_dashboard`,
+`add_data_source`, `create_widget_from_intent`). Opus 4.7 writes the
+JMESPath transforms from the sample responses. Within seconds, widgets
+appear in the iOS app and on your Home Screen.
+
+Try follow-ups:
+
+- "Make it cyberpunk." → `generate_theme` kicks in.
+- "Pin that to my Lock Screen." → widget appears on Lock Screen.
+
+### 5. The anomaly demo beat
+
+From any terminal while the server is running:
+
+```bash
+npm run demo:spike   # from server/ — critical errors jump to 47 for 2 minutes
+npm run demo:reset   # from server/ — back to zero
+```
+
+Within one poll cycle (≤ 5s), the server sees the spike, Opus 4.7 evaluates
+it, flags the snapshot, and your iOS app fires a Local Notification
+reading something like "Spike of 47 critical errors in the last 15m…"
+
+## Architecture
+
+See [CLAUDE.md](./CLAUDE.md) for the repo's operational context and scope
+rules. High-level:
+
+```
+Claude Desktop  ←MCP stdio→  BentoDeck backend  ←HTTP→  iOS app + widgets
+       │                       │   │    │
+       │                       │   │    └── Opus 4.7 (transforms, themes,
+       │                       │   │         anomaly detection + explanation)
+       │                       │   └── Poll scheduler + JMESPath engine
+       │                       └── Your own REST APIs (Stripe, Supabase,
+       │                            whatever) + bundled /demo/* mock
+       └── You, in plain English
+```
+
+Opus 4.7 runs in seven distinct places across this system — once at
+widget creation (JMESPath + widget-type inference), again on every
+meaningful snapshot (anomaly decision + one-sentence explanation),
+and on demand for AI-generated themes.
+
+## Repo layout
+
+```
+bentodeck/
+├── README.md           this file — public vision + quickstart
+├── CLAUDE.md           operational context for Claude Code
+├── LICENSE             MIT
+├── server/             TypeScript MCP + HTTP + poller + AI
+│   ├── src/
+│   │   ├── index.ts
+│   │   ├── mcp/        MCP tools exposed to Claude Desktop
+│   │   ├── http/       Hono HTTP API for iOS
+│   │   ├── ai/         Opus 4.7 clients (setup, anomaly, theme)
+│   │   ├── db/         SQLite schema + typed repository
+│   │   ├── sources/    REST fetching + JSON sample capping
+│   │   ├── scheduler/  Poll loop + anomaly hooks
+│   │   ├── themes/     6 preset themes
+│   │   └── demo/       Mock Stripe/Supabase/PostHog
+│   └── scripts/        seed-demo.ts, smoke-poller.ts
+└── ios/                SwiftUI app + WidgetKit extension
+    ├── project.yml     xcodegen spec
+    └── Sources/
+        ├── App/        main target
+        ├── Widget/     Home + Lock widgets
+        └── Shared/     models used by both targets
+```
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). Open-source from commit one per hackathon
+rules.
