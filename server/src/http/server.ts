@@ -8,6 +8,7 @@ import {
   listThemes,
   listWidgetsForDashboard,
 } from "../db/repo.js";
+import { createMockApi } from "../demo/mock-api.js";
 import { log } from "../logger.js";
 
 const PORT = Number(process.env.BENTODECK_HTTP_PORT ?? 3737);
@@ -76,6 +77,12 @@ export async function startHttpServer(): Promise<void> {
     if (!theme) return c.json({ error: "not found" }, 404);
     return c.json({ theme });
   });
+
+  // Demo mock API — stand-ins for Stripe, Supabase, PostHog.
+  // The demo flow tells Claude Desktop to point at /demo/* URLs as if
+  // they were real external systems. Presenter spikes errors with
+  // `curl -XPOST http://localhost:3737/demo/control/spike`.
+  app.route("/demo", createMockApi());
 
   serve({ fetch: app.fetch, port: PORT }, (info) => {
     log.info(`HTTP listening on http://localhost:${info.port}`);
