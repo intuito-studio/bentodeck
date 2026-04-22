@@ -82,3 +82,17 @@ export function getDb(): Database.Database {
   if (!dbInstance) throw new Error("DB not initialized; call initDb() first");
   return dbInstance;
 }
+
+// Test-only hook: close the current DB handle and null the singleton so a
+// subsequent initDb() picks up a fresh BENTODECK_DATA_DIR. Do not call from
+// production code.
+export function __resetDbForTests(): void {
+  if (dbInstance) {
+    try {
+      dbInstance.close();
+    } catch {
+      // ignore
+    }
+    dbInstance = null;
+  }
+}

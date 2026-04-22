@@ -13,7 +13,9 @@ import { log } from "../logger.js";
 
 const PORT = Number(process.env.BENTODECK_HTTP_PORT ?? 3737);
 
-export async function startHttpServer(): Promise<void> {
+// Builds the configured Hono app without binding a port. Exported so tests
+// can exercise routes via `app.fetch(new Request(...))`.
+export function buildHttpApp(): Hono {
   const app = new Hono();
 
   // CORS for the iOS simulator (harmless on device)
@@ -84,6 +86,11 @@ export async function startHttpServer(): Promise<void> {
   // `curl -XPOST http://localhost:3737/demo/control/spike`.
   app.route("/demo", createMockApi());
 
+  return app;
+}
+
+export async function startHttpServer(): Promise<void> {
+  const app = buildHttpApp();
   serve({ fetch: app.fetch, port: PORT }, (info) => {
     log.info(`HTTP listening on http://localhost:${info.port}`);
   });

@@ -147,3 +147,13 @@ export function stopPoller(): void {
     log.info("Poll scheduler stopped");
   }
 }
+
+// Test-only hook: run a single deterministic tick and await completion.
+export async function tickOnce(): Promise<void> {
+  await tick();
+}
+
+// Test-only hook: clear scheduler memory between test cases.
+export function __resetPollerForTests(): void {
+  lastPolledAt.clear();
+}

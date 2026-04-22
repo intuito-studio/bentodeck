@@ -32,7 +32,10 @@ function json(v: unknown) {
   return text(JSON.stringify(v, null, 2));
 }
 
-export async function startMcpServer(): Promise<void> {
+// Builds and returns a configured McpServer without binding a transport.
+// Exported so tests can introspect the registered tool list without
+// connecting to stdio.
+export function buildMcpServer(): McpServer {
   const mcp = new McpServer({
     name: "bentodeck",
     version: "0.1.0",
@@ -321,6 +324,11 @@ export async function startMcpServer(): Promise<void> {
     },
   );
 
+  return mcp;
+}
+
+export async function startMcpServer(): Promise<void> {
+  const mcp = buildMcpServer();
   const transport = new StdioServerTransport();
   await mcp.connect(transport);
   log.info("MCP stdio server connected");
