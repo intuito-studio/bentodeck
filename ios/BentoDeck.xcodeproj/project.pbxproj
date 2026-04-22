@@ -1,0 +1,522 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0291D9EB147F2289FCFD85C0 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7250406F0CE2EE6D9B1A60F /* Theme.swift */; };
+		1C775F71731BC7A34302FCA9 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7D1F823812304C825523D4 /* APIClient.swift */; };
+		2C2D05538E11233FC9E808B5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B8E9E95EC7DC7745255B48CA /* Assets.xcassets */; };
+		30E84AA024F91442449ED4D6 /* BentoDeckWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		39A1FA2D3E47E502B7263487 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C0CEF7AF390D1D6180D97F /* Config.swift */; };
+		4043023EC2A63DAFBED5D2FA /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6652D4E97E4CA868E7281012 /* SharedStore.swift */; };
+		5819DB590D4C8CCCE03E325C /* DashboardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0872674FF04EB1399B575B /* DashboardListView.swift */; };
+		703638ED7FA8934919A8BA99 /* WidgetCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108C73115A730D83FBB2E827 /* WidgetCardView.swift */; };
+		7C2D1C8A1F3C4716AE765CEB /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EC9D8FB8A885F9036C13B4 /* Provider.swift */; };
+		8C342234DAC6D520428D20BC /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6652D4E97E4CA868E7281012 /* SharedStore.swift */; };
+		8D1A5DCB3EFCFA043E5FEE26 /* Dashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0631E05A0153DF5C1D6D0EBB /* Dashboard.swift */; };
+		92AF8D8A5DA7E3A8F146132C /* HomeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9041D7284BA9E60806816FA4 /* HomeWidget.swift */; };
+		94912C7D66C3FDAF07FFED5A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE67445684544EBCF9DA9793 /* RootView.swift */; };
+		9B0009AC45B1004AA90C32C9 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C0CEF7AF390D1D6180D97F /* Config.swift */; };
+		A6F50BA9302C1A0F77C29231 /* BentoDeckWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2078DF2D525B54FE32C99 /* BentoDeckWidgetBundle.swift */; };
+		C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B989F6F04FE33D22987444 /* RefreshManager.swift */; };
+		E40CF7B52A18853611FDA9CA /* LockWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D5EC96F32468792ADF6AFE /* LockWidget.swift */; };
+		EFCD37107213DF34F08411EA /* Dashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0631E05A0153DF5C1D6D0EBB /* Dashboard.swift */; };
+		F11873EF6955B7E7C9E7D063 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7D1F823812304C825523D4 /* APIClient.swift */; };
+		F999B758A9A7E659DA149278 /* BentoDeckApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F22EACFE0372400DF478A /* BentoDeckApp.swift */; };
+		FAB6D553CAA0468DCB9EC063 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7250406F0CE2EE6D9B1A60F /* Theme.swift */; };
+		FF6701E6DF7116E9FB2B5F85 /* DashboardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820D0ED54E66451D70FAED07 /* DashboardDetailView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		085F3A566482376ADF9EFB68 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D6AC2D220DF813CCA564AA02 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE719512D79C8FDBC1965A22;
+			remoteInfo = BentoDeckWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FCC708024D07D82258EA3076 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				30E84AA024F91442449ED4D6 /* BentoDeckWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0631E05A0153DF5C1D6D0EBB /* Dashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dashboard.swift; sourceTree = "<group>"; };
+		07EC9D8FB8A885F9036C13B4 /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
+		0C0872674FF04EB1399B575B /* DashboardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardListView.swift; sourceTree = "<group>"; };
+		108C73115A730D83FBB2E827 /* WidgetCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCardView.swift; sourceTree = "<group>"; };
+		6652D4E97E4CA868E7281012 /* SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStore.swift; sourceTree = "<group>"; };
+		686F22EACFE0372400DF478A /* BentoDeckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDeckApp.swift; sourceTree = "<group>"; };
+		76C0CEF7AF390D1D6180D97F /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		820D0ED54E66451D70FAED07 /* DashboardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardDetailView.swift; sourceTree = "<group>"; };
+		9041D7284BA9E60806816FA4 /* HomeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidget.swift; sourceTree = "<group>"; };
+		9B7D1F823812304C825523D4 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BentoDeckWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B8E9E95EC7DC7745255B48CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B9EA693CD52325641C144569 /* BentoDeck.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BentoDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6E2078DF2D525B54FE32C99 /* BentoDeckWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDeckWidgetBundle.swift; sourceTree = "<group>"; };
+		C7250406F0CE2EE6D9B1A60F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		C7D5EC96F32468792ADF6AFE /* LockWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockWidget.swift; sourceTree = "<group>"; };
+		D1A1D2D85A99EE428BC40333 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DE67445684544EBCF9DA9793 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		DF740EC5E4BE80170022C1E0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F4B989F6F04FE33D22987444 /* RefreshManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefreshManager.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		29AE0FCA2351CC60DAFB9BEE /* Widget */ = {
+			isa = PBXGroup;
+			children = (
+				C6E2078DF2D525B54FE32C99 /* BentoDeckWidgetBundle.swift */,
+				9041D7284BA9E60806816FA4 /* HomeWidget.swift */,
+				DF740EC5E4BE80170022C1E0 /* Info.plist */,
+				C7D5EC96F32468792ADF6AFE /* LockWidget.swift */,
+				07EC9D8FB8A885F9036C13B4 /* Provider.swift */,
+			);
+			path = Widget;
+			sourceTree = "<group>";
+		};
+		3516DFE17B8C5855ACE0E25E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B9EA693CD52325641C144569 /* BentoDeck.app */,
+				B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		41A7B66E63A85F6251ECC451 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				B89234A167AF61CE445A4799 /* App */,
+				A8947E105C51C8FD58C32CF8 /* Shared */,
+				29AE0FCA2351CC60DAFB9BEE /* Widget */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		A8947E105C51C8FD58C32CF8 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				9B7D1F823812304C825523D4 /* APIClient.swift */,
+				76C0CEF7AF390D1D6180D97F /* Config.swift */,
+				0631E05A0153DF5C1D6D0EBB /* Dashboard.swift */,
+				6652D4E97E4CA868E7281012 /* SharedStore.swift */,
+				C7250406F0CE2EE6D9B1A60F /* Theme.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		B89234A167AF61CE445A4799 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				686F22EACFE0372400DF478A /* BentoDeckApp.swift */,
+				820D0ED54E66451D70FAED07 /* DashboardDetailView.swift */,
+				0C0872674FF04EB1399B575B /* DashboardListView.swift */,
+				D1A1D2D85A99EE428BC40333 /* Info.plist */,
+				F4B989F6F04FE33D22987444 /* RefreshManager.swift */,
+				DE67445684544EBCF9DA9793 /* RootView.swift */,
+				108C73115A730D83FBB2E827 /* WidgetCardView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		F34C2C56F2C148624D498961 = {
+			isa = PBXGroup;
+			children = (
+				B8E9E95EC7DC7745255B48CA /* Assets.xcassets */,
+				41A7B66E63A85F6251ECC451 /* Sources */,
+				3516DFE17B8C5855ACE0E25E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		975D603E904453AF949F207F /* BentoDeck */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2156B75D84D9BD4B393FE251 /* Build configuration list for PBXNativeTarget "BentoDeck" */;
+			buildPhases = (
+				47D231EAB1F1BD953E36D01F /* Sources */,
+				FF72938B342FE28DC1681156 /* Resources */,
+				FCC708024D07D82258EA3076 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CBAC560175E5A9A31EA03418 /* PBXTargetDependency */,
+			);
+			name = BentoDeck;
+			packageProductDependencies = (
+			);
+			productName = BentoDeck;
+			productReference = B9EA693CD52325641C144569 /* BentoDeck.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FE719512D79C8FDBC1965A22 /* BentoDeckWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C286F4644102E55DBF3138CF /* Build configuration list for PBXNativeTarget "BentoDeckWidget" */;
+			buildPhases = (
+				C35D46F4446E7DFDA5DF8451 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BentoDeckWidget;
+			packageProductDependencies = (
+			);
+			productName = BentoDeckWidget;
+			productReference = B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D6AC2D220DF813CCA564AA02 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					975D603E904453AF949F207F = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					FE719512D79C8FDBC1965A22 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 7B6DC07A80CDEE5E41228EE7 /* Build configuration list for PBXProject "BentoDeck" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = F34C2C56F2C148624D498961;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3516DFE17B8C5855ACE0E25E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				975D603E904453AF949F207F /* BentoDeck */,
+				FE719512D79C8FDBC1965A22 /* BentoDeckWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FF72938B342FE28DC1681156 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2C2D05538E11233FC9E808B5 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		47D231EAB1F1BD953E36D01F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1C775F71731BC7A34302FCA9 /* APIClient.swift in Sources */,
+				F999B758A9A7E659DA149278 /* BentoDeckApp.swift in Sources */,
+				39A1FA2D3E47E502B7263487 /* Config.swift in Sources */,
+				EFCD37107213DF34F08411EA /* Dashboard.swift in Sources */,
+				FF6701E6DF7116E9FB2B5F85 /* DashboardDetailView.swift in Sources */,
+				5819DB590D4C8CCCE03E325C /* DashboardListView.swift in Sources */,
+				C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */,
+				94912C7D66C3FDAF07FFED5A /* RootView.swift in Sources */,
+				8C342234DAC6D520428D20BC /* SharedStore.swift in Sources */,
+				FAB6D553CAA0468DCB9EC063 /* Theme.swift in Sources */,
+				703638ED7FA8934919A8BA99 /* WidgetCardView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C35D46F4446E7DFDA5DF8451 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F11873EF6955B7E7C9E7D063 /* APIClient.swift in Sources */,
+				A6F50BA9302C1A0F77C29231 /* BentoDeckWidgetBundle.swift in Sources */,
+				9B0009AC45B1004AA90C32C9 /* Config.swift in Sources */,
+				8D1A5DCB3EFCFA043E5FEE26 /* Dashboard.swift in Sources */,
+				92AF8D8A5DA7E3A8F146132C /* HomeWidget.swift in Sources */,
+				E40CF7B52A18853611FDA9CA /* LockWidget.swift in Sources */,
+				7C2D1C8A1F3C4716AE765CEB /* Provider.swift in Sources */,
+				4043023EC2A63DAFBED5D2FA /* SharedStore.swift in Sources */,
+				0291D9EB147F2289FCFD85C0 /* Theme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CBAC560175E5A9A31EA03418 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE719512D79C8FDBC1965A22 /* BentoDeckWidget */;
+			targetProxy = 085F3A566482376ADF9EFB68 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0965F12B0D441F74B7003809 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+		0FF73B321E621B31574C69C3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BentoDeck.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Sources/App/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.intuitostudio.bentodeck;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		119D9B001D822EEDD4DB3C2A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BentoDeckWidget.entitlements;
+				INFOPLIST_FILE = Sources/Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.intuitostudio.bentodeck.widget;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		36D7ABC8AAA52A9E72DEC2C6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BentoDeckWidget.entitlements;
+				INFOPLIST_FILE = Sources/Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.intuitostudio.bentodeck.widget;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5E04651C1F0138CD42E74CC6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		A8419696D676F6D102A1F07B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BentoDeck.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Sources/App/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.intuitostudio.bentodeck;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2156B75D84D9BD4B393FE251 /* Build configuration list for PBXNativeTarget "BentoDeck" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A8419696D676F6D102A1F07B /* Debug */,
+				0FF73B321E621B31574C69C3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7B6DC07A80CDEE5E41228EE7 /* Build configuration list for PBXProject "BentoDeck" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0965F12B0D441F74B7003809 /* Debug */,
+				5E04651C1F0138CD42E74CC6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C286F4644102E55DBF3138CF /* Build configuration list for PBXNativeTarget "BentoDeckWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				36D7ABC8AAA52A9E72DEC2C6 /* Debug */,
+				119D9B001D822EEDD4DB3C2A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D6AC2D220DF813CCA564AA02 /* Project object */;
+}
