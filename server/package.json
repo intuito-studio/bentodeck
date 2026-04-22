@@ -1,0 +1,36 @@
+{
+  "name": "bentodeck-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BentoDeck MCP server + HTTP backend. Bridges Claude Desktop to iOS ambient surfaces.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@hono/node-server": "^1.13.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "better-sqlite3": "^11.5.0",
+    "dotenv": "^16.4.5",
+    "hono": "^4.6.0",
+    "jmespath": "^0.16.0",
+    "node-cron": "^3.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/jmespath": "^0.15.2",
+    "@types/node": "^22.9.0",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
