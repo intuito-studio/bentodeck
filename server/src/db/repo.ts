@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "./schema.js";
+import type { Theme } from "../themes/presets.js";
+import { PRESET_THEMES } from "../themes/presets.js";
 import type {
   Dashboard,
   DashboardInput,
@@ -263,6 +265,45 @@ export function recentSnapshots(widgetId: string, limit = 50): Array<{
     anomalyFlag: r.anomaly_flag === 1,
     ts: r.ts,
   }));
+}
+
+// ---------- Themes ----------
+
+export function seedPresetThemes(): void {
+  const db = getDb();
+  const stmt = db.prepare(
+    `INSERT OR REPLACE INTO themes (id, name, is_preset, json)
+     VALUES (?, ?, 1, ?)`,
+  );
+  for (const preset of PRESET_THEMES) {
+    stmt.run(preset.id, preset.name, JSON.stringify(preset));
+  }
+}
+
+export function saveTheme(theme: Theme, isPreset = false): Theme {
+  getDb()
+    .prepare(
+      `INSERT OR REPLACE INTO themes (id, name, is_preset, json) VALUES (?, ?, ?, ?)`,
+    )
+    .run(theme.id, theme.name, isPreset ? 1 : 0, JSON.stringify(theme));
+  return theme;
+}
+
+export function getTheme(id: string): Theme | null {
+  const row = getDb()
+    .prepare(`SELECT json FROM themes WHERE id = ?`)
+    .get(id) as { json: string } | undefined;
+  if (!row) return null;
+  return JSON.parse(row.json) as Theme;
+}
+
+export function listThemes(): Theme[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT json FROM themes ORDER BY is_preset DESC, created_at DESC`,
+    )
+    .all() as Array<{ json: string }>;
+  return rows.map((r) => JSON.parse(r.json) as Theme);
 }
 
 export function markLatestSnapshotAnomaly(

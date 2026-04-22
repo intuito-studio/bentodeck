@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { planWidget } from "../ai/setup.js";
+import { generateTheme } from "../ai/theme.js";
 import {
   createDashboard,
   createDataSource,
@@ -9,15 +10,19 @@ import {
   deleteDashboard,
   getDashboard,
   getDataSource,
+  getTheme,
   listDashboards,
   listDataSources,
+  listThemes,
   listWidgetsForDashboard,
   saveLastSample,
+  saveTheme,
   setDashboardTheme,
   writeSnapshot,
 } from "../db/repo.js";
 import { log } from "../logger.js";
 import { fetchFromSource } from "../sources/fetch.js";
+import { listPresetIds } from "../themes/presets.js";
 
 function text(t: string) {
   return { content: [{ type: "text" as const, text: t }] };
@@ -254,6 +259,65 @@ export async function startMcpServer(): Promise<void> {
           error: previewError ?? null,
         },
       });
+    },
+  );
+
+  // -------- themes --------
+
+  mcp.tool(
+    "list_themes",
+    `List available themes. Presets ship with BentoDeck: ${listPresetIds().join(", ")}. AI-generated themes also appear here.`,
+    {},
+    async () => json({ themes: listThemes() }),
+  );
+
+  mcp.tool(
+    "apply_theme_preset",
+    `Apply one of the built-in preset themes to a dashboard. Presets: ${listPresetIds().join(", ")}.`,
+    {
+      dashboardId: z.string(),
+      preset: z.enum([
+        "default",
+        "cyberpunk",
+        "terminal",
+        "paper",
+        "bento-orange",
+        "pastel",
+      ]),
+    },
+    async ({ dashboardId, preset }) => {
+      const dash = getDashboard(dashboardId);
+      if (!dash) return text(`no dashboard with id ${dashboardId}`);
+      const theme = getTheme(preset);
+      if (!theme) return text(`preset ${preset} not found`);
+      setDashboardTheme(dashboardId, preset);
+      return json({ applied: preset, theme });
+    },
+  );
+
+  mcp.tool(
+    "generate_theme",
+    "Generate a new theme from a vibe prompt ('cyberpunk terminal', 'calm pastel notebook', 'minimal nordic', 'retro trading floor') using Opus 4.7. The theme is saved and, if dashboardId is provided, applied immediately. Returns the generated theme JSON.",
+    {
+      prompt: z
+        .string()
+        .min(2)
+        .max(200)
+        .describe("Short description of the vibe you want."),
+      dashboardId: z
+        .string()
+        .optional()
+        .describe("If set, apply the new theme to this dashboard."),
+    },
+    async ({ prompt, dashboardId }) => {
+      const theme = await generateTheme(prompt);
+      saveTheme(theme, false);
+      if (dashboardId) {
+        const dash = getDashboard(dashboardId);
+        if (!dash) return text(`theme generated, but no dashboard with id ${dashboardId}`);
+        setDashboardTheme(dashboardId, theme.id);
+      }
+      return json({ theme, appliedTo: dashboardId ?? null });
     },
   );
 

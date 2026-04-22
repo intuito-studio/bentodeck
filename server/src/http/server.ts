@@ -2,8 +2,10 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import {
   getDashboard,
+  getTheme,
   latestSnapshot,
   listDashboards,
+  listThemes,
   listWidgetsForDashboard,
 } from "../db/repo.js";
 import { log } from "../logger.js";
@@ -56,12 +58,23 @@ export async function startHttpServer(): Promise<void> {
       };
     });
 
+    const theme = getTheme(dash.themeId) ?? getTheme("default");
+
     return c.json({
       dashboardId,
       name: dash.name,
       themeId: dash.themeId,
+      theme,
       widgets,
     });
+  });
+
+  app.get("/themes", (c) => c.json({ themes: listThemes() }));
+
+  app.get("/themes/:id", (c) => {
+    const theme = getTheme(c.req.param("id"));
+    if (!theme) return c.json({ error: "not found" }, 404);
+    return c.json({ theme });
   });
 
   serve({ fetch: app.fetch, port: PORT }, (info) => {
