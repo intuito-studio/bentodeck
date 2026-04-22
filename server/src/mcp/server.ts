@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { planWidget } from "../ai/setup.js";
 import {
   createDashboard,
   createDataSource,
@@ -11,9 +12,12 @@ import {
   listDashboards,
   listDataSources,
   listWidgetsForDashboard,
+  saveLastSample,
   setDashboardTheme,
+  writeSnapshot,
 } from "../db/repo.js";
 import { log } from "../logger.js";
+import { fetchFromSource } from "../sources/fetch.js";
 
 function text(t: string) {
   return { content: [{ type: "text" as const, text: t }] };
@@ -185,6 +189,71 @@ export async function startMcpServer(): Promise<void> {
     async ({ dashboardId }) => {
       const widgets = listWidgetsForDashboard(dashboardId);
       return json({ widgets });
+    },
+  );
+
+  // -------- AI-assisted widget creation (the hero tool) --------
+
+  mcp.tool(
+    "create_widget_from_intent",
+    "Add a widget to a dashboard by describing what you want to see in plain English. BentoDeck fetches a sample response from the data source, uses Opus 4.7 to pick a JMESPath transform and widget type, writes an initial snapshot, and returns the widget plus a preview of the value. This is the primary way to add widgets — prefer it over add_widget.",
+    {
+      dashboardId: z.string(),
+      sourceId: z.string(),
+      intent: z
+        .string()
+        .min(3)
+        .describe(
+          "What the user wants to see. Examples: 'Stripe MRR', 'count of failed checkouts today', 'top 5 customers by revenue'.",
+        ),
+      position: z.number().int().nonnegative().default(0),
+    },
+    async ({ dashboardId, sourceId, intent, position }) => {
+      const dash = getDashboard(dashboardId);
+      if (!dash) return text(`no dashboard with id ${dashboardId}`);
+      const source = getDataSource(sourceId);
+      if (!source) return text(`no data source with id ${sourceId}`);
+
+      log.info(`[intent] dashboard=${dashboardId} source=${sourceId} intent="${intent}"`);
+
+      // 1) Sample the source.
+      const fetched = await fetchFromSource(source);
+      if (!fetched.ok) {
+        return text(
+          `data source returned HTTP ${fetched.status}. Check the URL and auth, then try again. Body:\n${fetched.bodyText.slice(0, 400)}`,
+        );
+      }
+      saveLastSample(sourceId, JSON.stringify(fetched.body));
+
+      // 2) Ask Opus 4.7 for a plan.
+      const { plan, previewValue, previewError } = await planWidget({
+        intent,
+        sampleJson: fetched.body,
+        sourceName: source.name,
+      });
+
+      // 3) Create the widget and write an initial snapshot so the iOS app
+      //    and widgets have something to render immediately.
+      const widget = createWidget({
+        dashboardId,
+        sourceId,
+        type: plan.widgetType,
+        title: plan.title,
+        transformExpr: plan.transformExpr,
+        position,
+      });
+      if (!previewError && previewValue !== undefined) {
+        writeSnapshot({ widgetId: widget.id, value: previewValue });
+      }
+
+      return json({
+        widget,
+        plan,
+        preview: {
+          value: previewValue,
+          error: previewError ?? null,
+        },
+      });
     },
   );
 
