@@ -1,7 +1,10 @@
 import jmespath from "jmespath";
+import { evaluateAnomaly } from "../ai/anomaly.js";
 import {
   listAllWidgets,
   listDataSources,
+  markLatestSnapshotAnomaly,
+  recentSnapshots,
   saveLastSample,
   writeSnapshot,
 } from "../db/repo.js";
@@ -36,6 +39,8 @@ async function pollSource(
           widget.transformExpr,
         );
         writeSnapshot({ widgetId: widget.id, value });
+        // Fire-and-forget anomaly check; don't block further widgets.
+        void checkAnomalyForWidget(widget, value);
       } catch (err) {
         log.warn(
           `[poll] transform failed widget=${widget.id} expr=${widget.transformExpr}`,
@@ -81,6 +86,44 @@ async function tick(): Promise<void> {
 
   if (tasks.length > 0) {
     await Promise.allSettled(tasks);
+  }
+}
+
+async function checkAnomalyForWidget(
+  widget: Widget,
+  currentValue: unknown,
+): Promise<void> {
+  try {
+    // Pull a window that includes the just-written snapshot; the latest entry
+    // corresponds to currentValue, the rest are prior history.
+    const recent = recentSnapshots(widget.id, 20);
+    if (recent.length < 4) return; // need >= 3 priors for a meaningful signal
+
+    const priorEntries = recent.slice(1);
+    const prevValue = priorEntries[0]?.value;
+    // Skip check if the value didn't change — saves model quota on idle polls.
+    if (JSON.stringify(prevValue) === JSON.stringify(currentValue)) return;
+
+    const history = priorEntries
+      .slice()
+      .reverse()
+      .map((s) => ({ value: s.value, ts: s.ts }));
+    const result = await evaluateAnomaly({
+      widget,
+      history,
+      currentValue,
+    });
+    if (result.isAnomaly) {
+      markLatestSnapshotAnomaly(widget.id, true, result.explanation);
+      log.info(
+        `[anomaly] widget=${widget.id} title="${widget.title}" — ${result.explanation}`,
+      );
+    }
+  } catch (err) {
+    log.warn(
+      `[anomaly] widget=${widget.id} evaluation failed`,
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 

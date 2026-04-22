@@ -264,3 +264,21 @@ export function recentSnapshots(widgetId: string, limit = 50): Array<{
     ts: r.ts,
   }));
 }
+
+export function markLatestSnapshotAnomaly(
+  widgetId: string,
+  flag: boolean,
+  explanation: string | null,
+): boolean {
+  const res = getDb()
+    .prepare(
+      `UPDATE snapshots
+       SET anomaly_flag = ?, anomaly_explanation = ?
+       WHERE id = (
+         SELECT id FROM snapshots WHERE widget_id = ?
+         ORDER BY ts DESC LIMIT 1
+       )`,
+    )
+    .run(flag ? 1 : 0, explanation, widgetId);
+  return res.changes > 0;
+}
