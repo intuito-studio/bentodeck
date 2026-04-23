@@ -11,6 +11,13 @@ import {
 import { log } from "../logger.js";
 import { fetchFromSource } from "../sources/fetch.js";
 import type { DataSource, Widget } from "../types/schemas.js";
+import { logGateDecision, shouldInvokeAnomalyAI } from "./anomaly-gate.js";
+
+// Skip anomaly checks for the first N polls after process start, while the
+// in-memory view of history is catching up with what's already in SQLite
+// from a prior run. Prevents "startup-noise anomalies".
+const WARMUP_POLLS_PER_WIDGET = 3;
+const warmupCounts = new Map<string, number>();
 
 // How often the poller wakes up to check what's due. Individual sources
 // are polled at their own `pollIntervalSec`, which must be ≥ this tick.
@@ -94,6 +101,15 @@ async function checkAnomalyForWidget(
   currentValue: unknown,
 ): Promise<void> {
   try {
+    // Warmup: ignore anomaly checks for the first N polls of a widget's
+    // process lifetime. Avoids spurious "startup anomalies" from a
+    // cold-started server seeing old SQLite history.
+    const warmup = warmupCounts.get(widget.id) ?? 0;
+    if (warmup < WARMUP_POLLS_PER_WIDGET) {
+      warmupCounts.set(widget.id, warmup + 1);
+      return;
+    }
+
     // Pull a window that includes the just-written snapshot; the latest entry
     // corresponds to currentValue, the rest are prior history.
     const recent = recentSnapshots(widget.id, 20);
@@ -108,6 +124,19 @@ async function checkAnomalyForWidget(
       .slice()
       .reverse()
       .map((s) => ({ value: s.value, ts: s.ts }));
+
+    // Cost-control gate: statistical pre-filter + per-widget daily cap.
+    // Only calls Opus 4.7 when the current value is meaningfully outside
+    // normal noise AND the widget hasn't burned its daily AI budget.
+    const gate = shouldInvokeAnomalyAI({
+      widgetId: widget.id,
+      widgetTitle: widget.title,
+      history: history.map((h) => ({ value: h.value })),
+      currentValue,
+    });
+    logGateDecision(widget.id, widget.title, gate);
+    if (!gate.proceed) return;
+
     const result = await evaluateAnomaly({
       widget,
       history,
@@ -156,4 +185,5 @@ export async function tickOnce(): Promise<void> {
 // Test-only hook: clear scheduler memory between test cases.
 export function __resetPollerForTests(): void {
   lastPolledAt.clear();
+  warmupCounts.clear();
 }
