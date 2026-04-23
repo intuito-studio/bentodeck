@@ -8,6 +8,7 @@ import {
   createWidget,
   getDataSource,
   latestSnapshot,
+  markLatestSnapshotAnomaly,
 } from "../db/repo.js";
 import { __resetPollerForTests, tickOnce } from "./poller.js";
 
@@ -119,6 +120,41 @@ describe("poll loop", () => {
     const secondSnap = latestSnapshot(widget.id);
     // Same ts means no new snapshot was written (poll was throttled).
     expect(secondSnap!.ts).toBe(firstTs);
+  });
+
+  it("carries anomaly state forward across unchanged-value polls", async () => {
+    const dash = createDashboard({ name: "Persist", themeId: "default" });
+    const src = createDataSource({
+      name: "src",
+      type: "rest",
+      url: `${baseUrl}/data`,
+      method: "GET",
+      pollIntervalSec: 1,
+    });
+    const widget = createWidget({
+      dashboardId: dash.id,
+      sourceId: src.id,
+      type: "number",
+      title: "Count",
+      transformExpr: "metrics.count",
+      position: 0,
+    });
+
+    // Seed: write an initial snapshot, then mark it anomalous — mimicking the
+    // point in time right after Opus 4.7 flagged a spike.
+    await tickOnce();
+    const firstSnap = latestSnapshot(widget.id);
+    expect(firstSnap).not.toBeNull();
+    expect(firstSnap!.value).toBe(1234);
+    markLatestSnapshotAnomaly(widget.id, true, "seeded spike explanation");
+
+    // Subsequent poll with unchanged value must not erase the anomaly state.
+    __resetPollerForTests();
+    await tickOnce();
+    const second = latestSnapshot(widget.id);
+    expect(second!.value).toBe(1234);
+    expect(second!.anomalyFlag).toBe(true);
+    expect(second!.anomalyExplanation).toBe("seeded spike explanation");
   });
 
   it("handles an upstream HTTP error without throwing", async () => {

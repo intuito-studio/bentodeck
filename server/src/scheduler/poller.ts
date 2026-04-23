@@ -1,6 +1,7 @@
 import jmespath from "jmespath";
 import { evaluateAnomaly } from "../ai/anomaly.js";
 import {
+  latestSnapshot,
   listAllWidgets,
   listDataSources,
   markLatestSnapshotAnomaly,
@@ -45,9 +46,31 @@ async function pollSource(
           result.body as object,
           widget.transformExpr,
         );
-        writeSnapshot({ widgetId: widget.id, value });
-        // Fire-and-forget anomaly check; don't block further widgets.
-        void checkAnomalyForWidget(widget, value);
+
+        // Persistence of anomaly state across unchanged-value polls.
+        // If the value hasn't changed since the last snapshot, carry the
+        // prior snapshot's anomaly flag + explanation forward. Without
+        // this, a persistent spike (errors=47→47→47) looks "fine" to the
+        // iOS app because each new row resets anomaly to 0, and the last-
+        // snapshot query only sees the fresh row.
+        const prev = latestSnapshot(widget.id);
+        const unchanged =
+          prev !== null &&
+          JSON.stringify(prev.value) === JSON.stringify(value);
+        if (unchanged && prev.anomalyFlag) {
+          writeSnapshot({
+            widgetId: widget.id,
+            value,
+            anomalyFlag: true,
+            anomalyExplanation: prev.anomalyExplanation,
+          });
+        } else {
+          writeSnapshot({ widgetId: widget.id, value });
+          // Fire-and-forget anomaly check; don't block further widgets.
+          // (The anomaly checker itself also short-circuits on unchanged
+          // values; the outer condition is kept explicit for clarity.)
+          if (!unchanged) void checkAnomalyForWidget(widget, value);
+        }
       } catch (err) {
         log.warn(
           `[poll] transform failed widget=${widget.id} expr=${widget.transformExpr}`,
