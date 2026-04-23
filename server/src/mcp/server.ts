@@ -1,28 +1,22 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { planWidget } from "../ai/setup.js";
-import { generateTheme } from "../ai/theme.js";
-import {
-  createDashboard,
-  createDataSource,
-  createWidget,
-  deleteDashboard,
-  getDashboard,
-  getDataSource,
-  getTheme,
-  listDashboards,
-  listDataSources,
-  listThemes,
-  listWidgetsForDashboard,
-  saveLastSample,
-  saveTheme,
-  setDashboardTheme,
-  writeSnapshot,
-} from "../db/repo.js";
 import { log } from "../logger.js";
-import { fetchFromSource } from "../sources/fetch.js";
-import { listPresetIds } from "../themes/presets.js";
+
+/**
+ * THIN MCP CLIENT.
+ *
+ * Every tool here is a stdio-shaped wrapper around an HTTP call to the
+ * BentoDeck backend. No direct DB access, no Anthropic SDK, no poller.
+ * This lets Claude Desktop spawn a tiny per-conversation process while
+ * the backend stays a long-lived, centralized service with the scheduler
+ * and SQLite — the architecture a production SaaS would have.
+ *
+ * The backend URL is read from BENTODECK_BASE_URL (defaults to localhost
+ * on the demo port). Error bodies from the backend are surfaced verbatim
+ * to Claude, so it can explain failures back to the user without us
+ * re-humanizing them here.
+ */
 
 function text(t: string) {
   return { content: [{ type: "text" as const, text: t }] };
@@ -32,39 +26,113 @@ function json(v: unknown) {
   return text(JSON.stringify(v, null, 2));
 }
 
-// Builds and returns a configured McpServer without binding a transport.
-// Exported so tests can introspect the registered tool list without
-// connecting to stdio.
-export function buildMcpServer(): McpServer {
+const PRESET_IDS = [
+  "default",
+  "cyberpunk",
+  "terminal",
+  "paper",
+  "bento-orange",
+  "pastel",
+] as const;
+
+function resolveBaseUrl(): string {
+  const raw = process.env.BENTODECK_BASE_URL ?? "http://localhost:3737";
+  return raw.replace(/\/+$/, "");
+}
+
+async function http<T = unknown>(
+  method: "GET" | "POST" | "DELETE" | "PATCH",
+  path: string,
+  body?: unknown,
+  baseUrl: string = resolveBaseUrl(),
+): Promise<{ ok: boolean; status: number; data: T | string }> {
+  const url = `${baseUrl}${path}`;
+  const init: RequestInit = {
+    method,
+    headers: body
+      ? { "Content-Type": "application/json", Accept: "application/json" }
+      : { Accept: "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  };
+  try {
+    const res = await fetch(url, init);
+    const raw = await res.text();
+    const contentType = res.headers.get("content-type") ?? "";
+    let parsed: T | string = raw;
+    if (contentType.includes("application/json")) {
+      try {
+        parsed = JSON.parse(raw) as T;
+      } catch {
+        /* keep raw */
+      }
+    }
+    return { ok: res.ok, status: res.status, data: parsed };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 0,
+      data: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export function buildMcpServer(baseUrl: string = resolveBaseUrl()): McpServer {
   const mcp = new McpServer({
     name: "bentodeck",
     version: "0.1.0",
   });
 
+  const call = <T>(
+    method: "GET" | "POST" | "DELETE" | "PATCH",
+    path: string,
+    body?: unknown,
+  ) => http<T>(method, path, body, baseUrl);
+
+  const formatError = (
+    action: string,
+    r: Awaited<ReturnType<typeof call>>,
+  ) => {
+    if (r.status === 0) {
+      return text(
+        `couldn't reach BentoDeck backend at ${baseUrl} (${r.data}). Is \`npm start\` running?`,
+      );
+    }
+    const detail =
+      typeof r.data === "string" ? r.data : JSON.stringify(r.data);
+    return text(`${action} failed: HTTP ${r.status} ${detail}`);
+  };
+
   // -------- sanity --------
 
   mcp.tool(
     "ping",
-    "Health check — returns pong so Claude can verify the BentoDeck MCP server is connected.",
+    "Health check. Returns pong when the BentoDeck MCP and its backend are reachable.",
     {},
-    async () => text("pong — bentodeck mcp server connected"),
+    async () => {
+      const r = await call<{ ok: boolean }>("GET", "/health");
+      if (!r.ok) return formatError("ping", r);
+      return text("pong — bentodeck backend reachable");
+    },
   );
 
   // -------- dashboards --------
 
   mcp.tool(
     "create_dashboard",
-    "Create an empty dashboard. Returns the new dashboard id. Add widgets to it with add_widget afterwards.",
+    "Create an empty dashboard. Returns the new dashboard id. Add widgets with create_widget_from_intent afterwards.",
     {
       name: z.string().min(1).describe("User-facing name, e.g. 'SaaS Health'"),
       themeId: z
         .string()
         .optional()
-        .describe("Preset theme id (default, cyberpunk, terminal, paper, bento-orange, pastel). Omit for default."),
+        .describe(
+          `Preset theme id (${PRESET_IDS.join(", ")}). Omit for default.`,
+        ),
     },
     async ({ name, themeId }) => {
-      const dash = createDashboard({ name, themeId: themeId ?? "default" });
-      return json({ dashboard: dash });
+      const r = await call("POST", "/dashboards", { name, themeId });
+      if (!r.ok) return formatError("create_dashboard", r);
+      return json(r.data);
     },
   );
 
@@ -72,7 +140,11 @@ export function buildMcpServer(): McpServer {
     "list_dashboards",
     "List all dashboards on this BentoDeck instance with their ids, names, and themes.",
     {},
-    async () => json({ dashboards: listDashboards() }),
+    async () => {
+      const r = await call("GET", "/dashboards");
+      if (!r.ok) return formatError("list_dashboards", r);
+      return json(r.data);
+    },
   );
 
   mcp.tool(
@@ -82,8 +154,9 @@ export function buildMcpServer(): McpServer {
       id: z.string().describe("Dashboard id returned from create_dashboard."),
     },
     async ({ id }) => {
-      const ok = deleteDashboard(id);
-      return text(ok ? `deleted ${id}` : `no dashboard with id ${id}`);
+      const r = await call("DELETE", `/dashboards/${encodeURIComponent(id)}`);
+      if (!r.ok) return formatError("delete_dashboard", r);
+      return text(`deleted ${id}`);
     },
   );
 
@@ -92,11 +165,18 @@ export function buildMcpServer(): McpServer {
     "Change the theme of an existing dashboard. Use apply_theme_preset for presets or generate_theme for AI-generated themes.",
     {
       dashboardId: z.string(),
-      themeId: z.string().describe("Either a preset id or a previously-saved theme id."),
+      themeId: z
+        .string()
+        .describe("Either a preset id or a previously-saved theme id."),
     },
     async ({ dashboardId, themeId }) => {
-      const ok = setDashboardTheme(dashboardId, themeId);
-      return text(ok ? `theme set to ${themeId}` : `no dashboard with id ${dashboardId}`);
+      const r = await call(
+        "PATCH",
+        `/dashboards/${encodeURIComponent(dashboardId)}/theme`,
+        { themeId },
+      );
+      if (!r.ok) return formatError("set_dashboard_theme", r);
+      return json(r.data);
     },
   );
 
@@ -104,7 +184,7 @@ export function buildMcpServer(): McpServer {
 
   mcp.tool(
     "add_data_source",
-    "Register a REST API data source. You provide the URL, method, headers, and optional auth. BentoDeck will poll this URL on a schedule and feed the result to widgets. For auth, use authHeaderKey='Authorization' and authHeaderValue='Bearer sk-…' or similar.",
+    "Register a REST API data source. BentoDeck will poll this URL on a schedule and feed the result to widgets. For auth, use authHeaderKey='Authorization' and authHeaderValue='Bearer sk-…' or similar.",
     {
       name: z.string().min(1).describe("Short label, e.g. 'Stripe MRR'."),
       url: z.string().url(),
@@ -124,19 +204,9 @@ export function buildMcpServer(): McpServer {
         .describe("How often to poll, in seconds. Min 1, max 3600."),
     },
     async (input) => {
-      const src = createDataSource({
-        name: input.name,
-        type: "rest",
-        url: input.url,
-        method: input.method,
-        headers: input.headers,
-        authHeaderKey: input.authHeaderKey,
-        authHeaderValue: input.authHeaderValue,
-        pollIntervalSec: input.pollIntervalSec,
-      });
-      // Don't leak the auth header in the returned record.
-      const { authHeaderValue: _omit, ...safe } = src;
-      return json({ source: safe });
+      const r = await call("POST", "/data-sources", input);
+      if (!r.ok) return formatError("add_data_source", r);
+      return json(r.data);
     },
   );
 
@@ -145,11 +215,9 @@ export function buildMcpServer(): McpServer {
     "List registered data sources (without secrets). Useful when you want to attach a new widget to an existing source.",
     {},
     async () => {
-      const sources = listDataSources().map((s) => {
-        const { authHeaderValue: _omit, ...safe } = s;
-        return safe;
-      });
-      return json({ sources });
+      const r = await call("GET", "/data-sources");
+      if (!r.ok) return formatError("list_data_sources", r);
+      return json(r.data);
     },
   );
 
@@ -157,7 +225,7 @@ export function buildMcpServer(): McpServer {
 
   mcp.tool(
     "add_widget",
-    "Add a widget to a dashboard. You must provide the JMESPath expression that extracts the value from the source's JSON response. For AI-assisted creation (recommended), use create_widget_from_intent once that tool ships.",
+    "Add a widget to a dashboard with a manually-specified JMESPath. For AI-assisted creation (recommended), use create_widget_from_intent instead.",
     {
       dashboardId: z.string(),
       sourceId: z.string(),
@@ -174,37 +242,40 @@ export function buildMcpServer(): McpServer {
         .string()
         .min(1)
         .describe(
-          "JMESPath expression applied to the source's latest JSON response. E.g. 'data.mrr' or 'length(errors[?level==\\'critical\\'])'.",
+          "JMESPath expression applied to the source's latest JSON response.",
         ),
       position: z.number().int().nonnegative().default(0),
     },
-    async (input) => {
-      const dash = getDashboard(input.dashboardId);
-      if (!dash) return text(`no dashboard with id ${input.dashboardId}`);
-      const src = getDataSource(input.sourceId);
-      if (!src) return text(`no data source with id ${input.sourceId}`);
-      const widget = createWidget(input);
-      return json({ widget });
+    async ({ dashboardId, ...body }) => {
+      const r = await call(
+        "POST",
+        `/dashboards/${encodeURIComponent(dashboardId)}/widgets`,
+        body,
+      );
+      if (!r.ok) return formatError("add_widget", r);
+      return json(r.data);
     },
   );
 
   mcp.tool(
     "list_widgets",
     "List widgets attached to a dashboard.",
-    {
-      dashboardId: z.string(),
-    },
+    { dashboardId: z.string() },
     async ({ dashboardId }) => {
-      const widgets = listWidgetsForDashboard(dashboardId);
-      return json({ widgets });
+      const r = await call(
+        "GET",
+        `/dashboards/${encodeURIComponent(dashboardId)}/widgets`,
+      );
+      if (!r.ok) return formatError("list_widgets", r);
+      return json(r.data);
     },
   );
 
-  // -------- AI-assisted widget creation (the hero tool) --------
+  // -------- hero AI tool --------
 
   mcp.tool(
     "create_widget_from_intent",
-    "Add a widget to a dashboard by describing what you want to see in plain English. BentoDeck fetches a sample response from the data source, uses Opus 4.7 to pick a JMESPath transform and widget type, writes an initial snapshot, and returns the widget plus a preview of the value. This is the primary way to add widgets — prefer it over add_widget.",
+    "Add a widget by describing what you want to see in plain English. BentoDeck samples the data source, uses Opus 4.7 to pick a JMESPath transform and widget type, writes an initial snapshot, and returns the widget plus a preview. This is the primary way to add widgets — prefer it over add_widget.",
     {
       dashboardId: z.string(),
       sourceId: z.string(),
@@ -217,51 +288,13 @@ export function buildMcpServer(): McpServer {
       position: z.number().int().nonnegative().default(0),
     },
     async ({ dashboardId, sourceId, intent, position }) => {
-      const dash = getDashboard(dashboardId);
-      if (!dash) return text(`no dashboard with id ${dashboardId}`);
-      const source = getDataSource(sourceId);
-      if (!source) return text(`no data source with id ${sourceId}`);
-
-      log.info(`[intent] dashboard=${dashboardId} source=${sourceId} intent="${intent}"`);
-
-      // 1) Sample the source.
-      const fetched = await fetchFromSource(source);
-      if (!fetched.ok) {
-        return text(
-          `data source returned HTTP ${fetched.status}. Check the URL and auth, then try again. Body:\n${fetched.bodyText.slice(0, 400)}`,
-        );
-      }
-      saveLastSample(sourceId, JSON.stringify(fetched.body));
-
-      // 2) Ask Opus 4.7 for a plan.
-      const { plan, previewValue, previewError } = await planWidget({
-        intent,
-        sampleJson: fetched.body,
-        sourceName: source.name,
-      });
-
-      // 3) Create the widget and write an initial snapshot so the iOS app
-      //    and widgets have something to render immediately.
-      const widget = createWidget({
-        dashboardId,
-        sourceId,
-        type: plan.widgetType,
-        title: plan.title,
-        transformExpr: plan.transformExpr,
-        position,
-      });
-      if (!previewError && previewValue !== undefined) {
-        writeSnapshot({ widgetId: widget.id, value: previewValue });
-      }
-
-      return json({
-        widget,
-        plan,
-        preview: {
-          value: previewValue,
-          error: previewError ?? null,
-        },
-      });
+      const r = await call(
+        "POST",
+        `/dashboards/${encodeURIComponent(dashboardId)}/widgets/from-intent`,
+        { sourceId, intent, position },
+      );
+      if (!r.ok) return formatError("create_widget_from_intent", r);
+      return json(r.data);
     },
   );
 
@@ -269,58 +302,47 @@ export function buildMcpServer(): McpServer {
 
   mcp.tool(
     "list_themes",
-    `List available themes. Presets ship with BentoDeck: ${listPresetIds().join(", ")}. AI-generated themes also appear here.`,
+    `List available themes. Presets ship with BentoDeck: ${PRESET_IDS.join(", ")}. AI-generated themes also appear here.`,
     {},
-    async () => json({ themes: listThemes() }),
+    async () => {
+      const r = await call("GET", "/themes");
+      if (!r.ok) return formatError("list_themes", r);
+      return json(r.data);
+    },
   );
 
   mcp.tool(
     "apply_theme_preset",
-    `Apply one of the built-in preset themes to a dashboard. Presets: ${listPresetIds().join(", ")}.`,
+    `Apply one of the built-in preset themes to a dashboard. Presets: ${PRESET_IDS.join(", ")}.`,
     {
       dashboardId: z.string(),
-      preset: z.enum([
-        "default",
-        "cyberpunk",
-        "terminal",
-        "paper",
-        "bento-orange",
-        "pastel",
-      ]),
+      preset: z.enum(PRESET_IDS),
     },
     async ({ dashboardId, preset }) => {
-      const dash = getDashboard(dashboardId);
-      if (!dash) return text(`no dashboard with id ${dashboardId}`);
-      const theme = getTheme(preset);
-      if (!theme) return text(`preset ${preset} not found`);
-      setDashboardTheme(dashboardId, preset);
-      return json({ applied: preset, theme });
+      const r = await call(
+        "POST",
+        `/dashboards/${encodeURIComponent(dashboardId)}/apply-preset`,
+        { preset },
+      );
+      if (!r.ok) return formatError("apply_theme_preset", r);
+      return json(r.data);
     },
   );
 
   mcp.tool(
     "generate_theme",
-    "Generate a new theme from a vibe prompt ('cyberpunk terminal', 'calm pastel notebook', 'minimal nordic', 'retro trading floor') using Opus 4.7. The theme is saved and, if dashboardId is provided, applied immediately. Returns the generated theme JSON.",
+    "Generate a new theme from a vibe prompt ('cyberpunk terminal', 'calm pastel notebook', 'minimal nordic', 'retro trading floor') using Opus 4.7. The theme is saved and, if dashboardId is provided, applied immediately.",
     {
-      prompt: z
-        .string()
-        .min(2)
-        .max(200)
-        .describe("Short description of the vibe you want."),
-      dashboardId: z
-        .string()
-        .optional()
-        .describe("If set, apply the new theme to this dashboard."),
+      prompt: z.string().min(2).max(200),
+      dashboardId: z.string().optional(),
     },
     async ({ prompt, dashboardId }) => {
-      const theme = await generateTheme(prompt);
-      saveTheme(theme, false);
-      if (dashboardId) {
-        const dash = getDashboard(dashboardId);
-        if (!dash) return text(`theme generated, but no dashboard with id ${dashboardId}`);
-        setDashboardTheme(dashboardId, theme.id);
-      }
-      return json({ theme, appliedTo: dashboardId ?? null });
+      const r = await call("POST", "/themes/generate", {
+        prompt,
+        dashboardId,
+      });
+      if (!r.ok) return formatError("generate_theme", r);
+      return json(r.data);
     },
   );
 
@@ -331,5 +353,5 @@ export async function startMcpServer(): Promise<void> {
   const mcp = buildMcpServer();
   const transport = new StdioServerTransport();
   await mcp.connect(transport);
-  log.info("MCP stdio server connected");
+  log.info(`MCP stdio server connected → ${resolveBaseUrl()}`);
 }

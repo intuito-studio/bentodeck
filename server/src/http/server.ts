@@ -10,6 +10,7 @@ import {
 } from "../db/repo.js";
 import { createMockApi } from "../demo/mock-api.js";
 import { log } from "../logger.js";
+import { buildRoutes } from "./routes.js";
 
 const PORT = Number(process.env.BENTODECK_HTTP_PORT ?? 3737);
 
@@ -79,6 +80,9 @@ export function buildHttpApp(): Hono {
     if (!theme) return c.json({ error: "not found" }, 404);
     return c.json({ theme });
   });
+
+  // Write-side CRUD + AI routes used by the MCP thin client.
+  app.route("/", buildRoutes());
 
   // Demo mock API — stand-ins for Stripe, Supabase, PostHog.
   // The demo flow tells Claude Desktop to point at /demo/* URLs as if
