@@ -23,11 +23,11 @@ final class BentoLayoutModel: ObservableObject {
         sizeOverrides = s.sizeOverrides
     }
 
-    /// Cycle the named widget to the next size. The first cycle on a virgin
-    /// dashboard seeds every widget's current auto-layout size into the
-    /// override map first — without that, the other widgets would reset to
-    /// `.small` the moment one is touched.
-    func cycle(widgetId: String, in widgets: [SnapshotWidget]) {
+    /// Set an explicit size for a widget. The first edit on a virgin dashboard
+    /// seeds every widget's current auto-layout size into the override map
+    /// first — without that, untouched cells would all reset to `.small` the
+    /// moment one is resized.
+    func setSize(_ size: LayoutSize, widgetId: String, in widgets: [SnapshotWidget]) {
         if !customized {
             let defaults = BentoLayout.defaultSizes(count: widgets.count)
             for (i, w) in widgets.enumerated() {
@@ -36,9 +36,15 @@ final class BentoLayoutModel: ObservableObject {
             }
             customized = true
         }
-        let current = sizeOverrides[widgetId] ?? .small
-        sizeOverrides[widgetId] = current.next
+        sizeOverrides[widgetId] = size
         save()
+    }
+
+    /// Cycle the named widget to the next size. Used as a tap fallback on the
+    /// resize handle when the user touches without dragging.
+    func cycle(widgetId: String, in widgets: [SnapshotWidget]) {
+        let current = sizeOverrides[widgetId] ?? size(for: widgetId, in: widgets)
+        setSize(current.next, widgetId: widgetId, in: widgets)
     }
 
     func reset() {
@@ -65,18 +71,28 @@ final class BentoLayoutModel: ObservableObject {
     }
 }
 
+/// Tracks an in-flight resize drag at the grid level, so the dashed ghost
+/// outline can render outside the dragged cell's frame (the ghost may need
+/// to extend to where the cell *will* be after the snap).
+private struct DragGhost: Equatable {
+    let widgetId: String
+    let targetSize: LayoutSize
+}
+
 /// The dashboard's bento-grid surface.
 ///
 /// Renders widgets onto a 2-column grid using `BentoLayout`, with iOS Home
 /// Screen-style edit mode: long-press anywhere to enter, each card wiggles
-/// gently with a per-id phase stagger, and tapping the bottom-right handle
-/// cycles the widget through `small → wide → large → tall → small`.
+/// gently with a per-id phase stagger, and the bottom-right handle either
+/// drags to a new size (with a ghost preview) or taps to cycle through sizes.
 struct BentoGridView: View {
     let widgets: [SnapshotWidget]
     let theme: Theme
     @Binding var editMode: Bool
     @ObservedObject var model: BentoLayoutModel
     let onAnomalyTap: (SnapshotWidget) -> Void
+
+    @State private var ghost: DragGhost?
 
     private let columns = BentoLayout.columns
     private let gap: CGFloat = 12
@@ -107,8 +123,8 @@ struct BentoGridView: View {
 
                     ForEach(packed, id: \.id) { p in
                         if let widget = widgets.first(where: { $0.id == p.id }) {
-                            let w = columnWidth * CGFloat(p.cell.size.cols) + gap * CGFloat(max(0, p.cell.size.cols - 1))
-                            let h = rowHeight * CGFloat(p.cell.size.rows) + gap * CGFloat(max(0, p.cell.size.rows - 1))
+                            let w = cellWidth(for: p.cell.size, columnWidth: columnWidth)
+                            let h = cellHeight(for: p.cell.size, rowHeight: rowHeight)
                             let x = hPadding + CGFloat(p.cell.col) * (columnWidth + gap)
                             let y = vPadding + CGFloat(p.cell.row) * (rowHeight + gap)
 
@@ -118,20 +134,68 @@ struct BentoGridView: View {
                                 size: p.cell.size,
                                 cellHeight: h,
                                 editMode: editMode,
+                                columnWidth: columnWidth,
+                                rowHeight: rowHeight,
+                                gap: gap,
                                 onLongPress: enterEditMode,
                                 onAnomalyTap: { onAnomalyTap(widget) },
-                                onResize: { model.cycle(widgetId: widget.id, in: widgets) }
+                                onTapResize: {
+                                    model.cycle(widgetId: widget.id, in: widgets)
+                                },
+                                onDragChange: { target in
+                                    ghost = DragGhost(widgetId: widget.id, targetSize: target)
+                                },
+                                onDragEnd: { target in
+                                    ghost = nil
+                                    if target != p.cell.size {
+                                        let gen = UIImpactFeedbackGenerator(style: .medium)
+                                        gen.impactOccurred()
+                                        model.setSize(target, widgetId: widget.id, in: widgets)
+                                    }
+                                },
+                                onDragCancel: {
+                                    ghost = nil
+                                }
                             )
                             .frame(width: w, height: h)
                             .offset(x: x, y: y)
+                            .zIndex(ghost?.widgetId == widget.id ? 1 : 0)
                             .animation(.spring(response: 0.42, dampingFraction: 0.85), value: p.cell)
                         }
+                    }
+
+                    // Dashed ghost outline showing the targeted size during a
+                    // resize drag. Anchored to the dragged cell's top-left.
+                    if let ghost,
+                       let cell = packed.first(where: { $0.id == ghost.widgetId })?.cell {
+                        let gw = cellWidth(for: ghost.targetSize, columnWidth: columnWidth)
+                        let gh = cellHeight(for: ghost.targetSize, rowHeight: rowHeight)
+                        let gx = hPadding + CGFloat(cell.col) * (columnWidth + gap)
+                        let gy = vPadding + CGFloat(cell.row) * (rowHeight + gap)
+
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(
+                                Color(hex: theme.colors.accent).opacity(0.85),
+                                style: StrokeStyle(lineWidth: 2.5, dash: [8, 6])
+                            )
+                            .frame(width: gw, height: gh)
+                            .offset(x: gx, y: gy)
+                            .allowsHitTesting(false)
+                            .animation(.easeOut(duration: 0.12), value: ghost.targetSize)
                     }
                 }
                 .frame(width: geo.size.width, height: totalHeight, alignment: .topLeading)
             }
             .scrollDisabled(fits)
         }
+    }
+
+    private func cellWidth(for size: LayoutSize, columnWidth: CGFloat) -> CGFloat {
+        columnWidth * CGFloat(size.cols) + gap * CGFloat(max(0, size.cols - 1))
+    }
+
+    private func cellHeight(for size: LayoutSize, rowHeight: CGFloat) -> CGFloat {
+        rowHeight * CGFloat(size.rows) + gap * CGFloat(max(0, size.rows - 1))
     }
 
     private func clampedRowHeight(available: CGFloat, rows: Int) -> CGFloat {
@@ -169,14 +233,18 @@ private struct BentoCell: View {
     let size: LayoutSize
     let cellHeight: CGFloat
     let editMode: Bool
+    let columnWidth: CGFloat
+    let rowHeight: CGFloat
+    let gap: CGFloat
     let onLongPress: () -> Void
     let onAnomalyTap: () -> Void
-    let onResize: () -> Void
+    let onTapResize: () -> Void
+    let onDragChange: (LayoutSize) -> Void
+    let onDragEnd: (LayoutSize) -> Void
+    let onDragCancel: () -> Void
 
-    /// Treat any cell taller than ~200pt as hero — even a `.small` cell ends
-    /// up that big in the auto-layout for 3 widgets, where the smalls stretch
-    /// to fill the remaining vertical space below the wide hero. Without this
-    /// threshold the bottom row of a 3-widget dashboard looks half-empty.
+    @State private var dragStartSize: LayoutSize?
+
     private var displaySize: WidgetDisplaySize {
         if size == .small && cellHeight < 200 { return .compact }
         return .hero
@@ -187,30 +255,69 @@ private struct BentoCell: View {
             cardContent
                 .allowsHitTesting(!editMode)
             if editMode {
-                Button(action: onResize) {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.black)
-                        .frame(width: 28, height: 28)
-                        .background(
-                            Circle()
-                                .fill(.white)
-                                .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-                .padding(10)
-                .transition(.scale.combined(with: .opacity))
-                .accessibilityLabel("Resize widget")
+                resizeHandle
+                    .padding(10)
+                    .transition(.scale.combined(with: .opacity))
             }
         }
         .modifier(WiggleEffect(active: editMode, seed: widget.id))
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        // simultaneousGesture (not .onLongPressGesture) so anomaly cards
-        // wrapped in a Button still enter edit mode — Button consumes the
-        // touch sequence and would otherwise swallow .onLongPressGesture.
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.35).onEnded { _ in onLongPress() }
+        )
+    }
+
+    @ViewBuilder
+    private var resizeHandle: some View {
+        Image(systemName: "arrow.up.left.and.arrow.down.right")
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(.black)
+            .frame(width: 36, height: 36)
+            .contentShape(Circle())
+            .background(
+                Circle()
+                    .fill(.white)
+                    .frame(width: 30, height: 30)
+                    .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
+            )
+            .accessibilityLabel("Resize widget — drag, or tap to cycle")
+            .gesture(
+                DragGesture(minimumDistance: 6, coordinateSpace: .global)
+                    .onChanged { value in
+                        if dragStartSize == nil { dragStartSize = size }
+                        guard let start = dragStartSize else { return }
+                        let target = sizeForDrag(translation: value.translation, from: start)
+                        onDragChange(target)
+                    }
+                    .onEnded { value in
+                        guard let start = dragStartSize else {
+                            onDragCancel()
+                            return
+                        }
+                        let target = sizeForDrag(translation: value.translation, from: start)
+                        dragStartSize = nil
+                        onDragEnd(target)
+                    }
+            )
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    // Stationary tap (no drag movement) — cycle as a fallback.
+                    if dragStartSize == nil { onTapResize() }
+                }
+            )
+    }
+
+    /// Pick the LayoutSize whose visual rect is closest to the cell's current
+    /// rect plus the drag translation. The ghost outline tracks this.
+    private func sizeForDrag(translation: CGSize, from startSize: LayoutSize) -> LayoutSize {
+        let startW = CGFloat(startSize.cols) * columnWidth + CGFloat(max(0, startSize.cols - 1)) * gap
+        let startH = CGFloat(startSize.rows) * rowHeight + CGFloat(max(0, startSize.rows - 1)) * gap
+        return BentoLayout.closestSize(
+            toWidth: Double(max(0, startW + translation.width)),
+            height: Double(max(0, startH + translation.height)),
+            columnWidth: Double(columnWidth),
+            rowHeight: Double(rowHeight),
+            gap: Double(gap)
         )
     }
 

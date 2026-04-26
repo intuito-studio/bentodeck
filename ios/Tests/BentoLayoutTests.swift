@@ -59,6 +59,93 @@ final class BentoAutoLayoutTests: XCTestCase {
     }
 }
 
+final class BentoClosestSizeTests: XCTestCase {
+    // Realistic iPhone numbers: 2-column grid in a ~393pt wide screen.
+    private let columnWidth: Double = 178
+    private let rowHeight: Double = 180
+    private let gap: Double = 12
+
+    private func widthOf(_ size: LayoutSize) -> Double {
+        Double(size.cols) * columnWidth + Double(max(0, size.cols - 1)) * gap
+    }
+    private func heightOf(_ size: LayoutSize) -> Double {
+        Double(size.rows) * rowHeight + Double(max(0, size.rows - 1)) * gap
+    }
+
+    func testExactRectMatchesItself() {
+        for size in LayoutSize.allCases {
+            let pick = BentoLayout.closestSize(
+                toWidth: widthOf(size), height: heightOf(size),
+                columnWidth: columnWidth, rowHeight: rowHeight, gap: gap
+            )
+            XCTAssertEqual(pick, size, "Exact cell rect for \(size) should map back to \(size)")
+        }
+    }
+
+    func testTinyRectSnapsToSmall() {
+        let pick = BentoLayout.closestSize(
+            toWidth: 10, height: 10,
+            columnWidth: columnWidth, rowHeight: rowHeight, gap: gap
+        )
+        XCTAssertEqual(pick, .small)
+    }
+
+    func testHugeRectSnapsToLarge() {
+        let pick = BentoLayout.closestSize(
+            toWidth: 9999, height: 9999,
+            columnWidth: columnWidth, rowHeight: rowHeight, gap: gap
+        )
+        XCTAssertEqual(pick, .large)
+    }
+
+    func testDragRightFromSmallTargetsWide() {
+        // Start: small (178×180). User drags handle right by ~one column width
+        // → the rect is now ~2 cols × 1 row, which should snap to .wide.
+        let startW = widthOf(.small)
+        let startH = heightOf(.small)
+        let pick = BentoLayout.closestSize(
+            toWidth: startW + columnWidth + gap, height: startH,
+            columnWidth: columnWidth, rowHeight: rowHeight, gap: gap
+        )
+        XCTAssertEqual(pick, .wide)
+    }
+
+    func testDragDownFromSmallTargetsTall() {
+        // Drag handle down by ~one row → snap to .tall.
+        let startW = widthOf(.small)
+        let startH = heightOf(.small)
+        let pick = BentoLayout.closestSize(
+            toWidth: startW, height: startH + rowHeight + gap,
+            columnWidth: columnWidth, rowHeight: rowHeight, gap: gap
+        )
+        XCTAssertEqual(pick, .tall)
+    }
+
+    func testDragDiagonalFromSmallTargetsLarge() {
+        // Drag handle right + down by roughly one cell each direction.
+        let startW = widthOf(.small)
+        let startH = heightOf(.small)
+        let pick = BentoLayout.closestSize(
+            toWidth: startW + columnWidth + gap,
+            height: startH + rowHeight + gap,
+            columnWidth: columnWidth, rowHeight: rowHeight, gap: gap
+        )
+        XCTAssertEqual(pick, .large)
+    }
+
+    func testShrinkFromLargeTargetsSmall() {
+        // From large (368×372), drag the handle ~one cell up and left.
+        let startW = widthOf(.large)
+        let startH = heightOf(.large)
+        let pick = BentoLayout.closestSize(
+            toWidth: startW - columnWidth - gap,
+            height: startH - rowHeight - gap,
+            columnWidth: columnWidth, rowHeight: rowHeight, gap: gap
+        )
+        XCTAssertEqual(pick, .small)
+    }
+}
+
 final class BentoPackerTests: XCTestCase {
     func testPacksAutoLayoutForThreeWidgets() {
         let items: [(id: String, size: LayoutSize)] = [

@@ -123,6 +123,39 @@ enum BentoLayout {
         packed.map { $0.cell.row + $0.cell.size.rows }.max() ?? 0
     }
 
+    /// Pick the `LayoutSize` whose visual rect is closest to the requested
+    /// width × height. Used by the resize-by-drag gesture: as the user drags
+    /// the bottom-right handle, the target size is whichever standard cell
+    /// dimensions best match the (start cell + drag translation) rect.
+    ///
+    /// `columnWidth` and `rowHeight` are the unit dimensions (1×1 cell) and
+    /// `gap` is the inter-cell spacing — same numbers the grid view uses to
+    /// lay everything else out.
+    static func closestSize(
+        toWidth targetWidth: Double,
+        height targetHeight: Double,
+        columnWidth: Double,
+        rowHeight: Double,
+        gap: Double
+    ) -> LayoutSize {
+        var best: LayoutSize = .small
+        var bestDist = Double.infinity
+        for candidate in LayoutSize.allCases {
+            let cw = Double(candidate.cols) * columnWidth
+                + Double(max(0, candidate.cols - 1)) * gap
+            let ch = Double(candidate.rows) * rowHeight
+                + Double(max(0, candidate.rows - 1)) * gap
+            let dx = cw - targetWidth
+            let dy = ch - targetHeight
+            let dist = dx * dx + dy * dy
+            if dist < bestDist {
+                bestDist = dist
+                best = candidate
+            }
+        }
+        return best
+    }
+
     private static func firstFittingColumn(
         size: LayoutSize,
         row: Int,
