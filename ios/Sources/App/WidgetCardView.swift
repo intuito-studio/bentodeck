@@ -19,6 +19,7 @@ struct WidgetCardView: View {
     let widget: SnapshotWidget
     let theme: Theme
     var displaySize: WidgetDisplaySize = .compact
+    var useGlass: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: spacing) {
@@ -42,12 +43,11 @@ struct WidgetCardView: View {
         .padding(displaySize == .hero ? 20 : 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(hex: theme.colors.surface))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color(hex: theme.colors.border), lineWidth: 1)
-                )
+            GlassSurface(
+                useGlass: useGlass,
+                surfaceColor: Color(hex: theme.colors.surface),
+                borderColor: Color(hex: theme.colors.border)
+            )
         )
     }
 

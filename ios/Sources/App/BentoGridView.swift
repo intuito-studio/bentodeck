@@ -91,6 +91,7 @@ struct BentoGridView: View {
     @Binding var editMode: Bool
     @ObservedObject var model: BentoLayoutModel
     let onAnomalyTap: (SnapshotWidget) -> Void
+    var useGlass: Bool = false
 
     @State private var ghost: DragGhost?
 
@@ -133,6 +134,7 @@ struct BentoGridView: View {
                                 widget: widget,
                                 theme: theme,
                                 size: p.cell.size,
+                                useGlass: useGlass,
                                 editMode: editMode,
                                 columnWidth: columnWidth,
                                 rowHeight: rowHeight,
@@ -225,6 +227,7 @@ private struct BentoCell: View {
     let widget: SnapshotWidget
     let theme: Theme
     let size: LayoutSize
+    let useGlass: Bool
     let editMode: Bool
     let columnWidth: CGFloat
     let rowHeight: CGFloat
@@ -315,7 +318,12 @@ private struct BentoCell: View {
 
     @ViewBuilder
     private var cardContent: some View {
-        let card = WidgetCardView(widget: widget, theme: theme, displaySize: displaySize)
+        let card = WidgetCardView(
+            widget: widget,
+            theme: theme,
+            displaySize: displaySize,
+            useGlass: useGlass
+        )
         if !editMode, widget.anomaly, widget.investigationId != nil {
             Button(action: onAnomalyTap) { card }
                 .buttonStyle(.plain)

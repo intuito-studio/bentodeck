@@ -51,6 +51,10 @@ struct FocusEntry: TimelineEntry {
     let theme: Theme
     let refreshedAt: Date?
     let configuration: BentoDeckFocusIntent
+    let background: DashboardBackground
+    let backgroundImageData: Data?
+
+    var useGlass: Bool { background == .image && backgroundImageData != nil }
 
     static var placeholder: FocusEntry {
         FocusEntry(
@@ -59,7 +63,9 @@ struct FocusEntry: TimelineEntry {
             widget: nil,
             theme: .fallback,
             refreshedAt: nil,
-            configuration: BentoDeckFocusIntent()
+            configuration: BentoDeckFocusIntent(),
+            background: .theme,
+            backgroundImageData: nil
         )
     }
 }
@@ -81,13 +87,25 @@ struct FocusTimelineProvider: AppIntentTimelineProvider {
 
     private func entry(for configuration: BentoDeckFocusIntent) -> FocusEntry {
         let resolved = FocusResolver.resolve(intent: configuration)
+        let store = SharedStore.shared
+        let bg: DashboardBackground
+        let bgData: Data?
+        if let dashId = resolved.snapshot?.dashboardId {
+            bg = store.loadBackground(dashboardId: dashId)
+            bgData = bg == .image ? store.loadBackgroundImageData(dashboardId: dashId) : nil
+        } else {
+            bg = .theme
+            bgData = nil
+        }
         return FocusEntry(
             date: resolved.refreshedAt ?? Date(),
             snapshot: resolved.snapshot,
             widget: resolved.widget,
             theme: resolved.snapshot?.theme ?? .fallback,
             refreshedAt: resolved.refreshedAt,
-            configuration: configuration
+            configuration: configuration,
+            background: bg,
+            backgroundImageData: bgData
         )
     }
 }
@@ -106,16 +124,34 @@ struct FocusWidget: Widget {
             FocusView(
                 widget: entry.widget,
                 theme: entry.theme,
-                lastRefreshedAt: entry.refreshedAt
+                lastRefreshedAt: entry.refreshedAt,
+                useGlass: entry.useGlass
             )
             .containerBackground(for: .widget) {
-                Color(hex: entry.theme.colors.background)
+                FocusWidgetBackground(entry: entry)
             }
             .widgetURL(deepLink(for: entry))
         }
         .configurationDisplayName("BentoDeck — Focus")
         .description("Pin one widget at full size. Leave the picker blank for a smart pick (anomaly first, then most-recent).")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
+    }
+
+    private struct FocusWidgetBackground: View {
+        let entry: FocusEntry
+        var body: some View {
+            ZStack {
+                Color(hex: entry.theme.colors.background)
+                if entry.background == .image,
+                   let data = entry.backgroundImageData,
+                   let img = UIImage(data: data) {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                    Color.black.opacity(0.25)
+                }
+            }
+        }
     }
 
     /// Tap → land on the widget's parent dashboard so the user can drill in.

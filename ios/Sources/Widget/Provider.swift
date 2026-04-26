@@ -5,11 +5,17 @@ struct BentoEntry: TimelineEntry {
     let date: Date
     let snapshot: SnapshotResponse?
     let theme: Theme
+    let background: DashboardBackground
+    let backgroundImageData: Data?
+
+    var useGlass: Bool { background == .image && backgroundImageData != nil }
 
     static let placeholder = BentoEntry(
         date: Date(),
         snapshot: nil,
-        theme: .fallback
+        theme: .fallback,
+        background: .theme,
+        backgroundImageData: nil
     )
 }
 
@@ -36,17 +42,25 @@ struct BentoTimelineProvider: TimelineProvider {
     }
 
     private func currentEntry() -> BentoEntry {
-        if let (snapshot, at) = SharedStore.shared.loadSnapshot() {
+        let store = SharedStore.shared
+        guard let (snapshot, at) = store.loadSnapshot() else {
             return BentoEntry(
-                date: at,
-                snapshot: snapshot,
-                theme: snapshot.theme ?? .fallback
+                date: Date(),
+                snapshot: nil,
+                theme: .fallback,
+                background: .theme,
+                backgroundImageData: nil
             )
         }
+        let dashboardId = snapshot.dashboardId
+        let bg = store.loadBackground(dashboardId: dashboardId)
+        let bgData = bg == .image ? store.loadBackgroundImageData(dashboardId: dashboardId) : nil
         return BentoEntry(
-            date: Date(),
-            snapshot: nil,
-            theme: .fallback
+            date: at,
+            snapshot: snapshot,
+            theme: snapshot.theme ?? .fallback,
+            background: bg,
+            backgroundImageData: bgData
         )
     }
 }

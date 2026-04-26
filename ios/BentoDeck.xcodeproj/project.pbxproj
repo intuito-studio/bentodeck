@@ -23,6 +23,7 @@
 		40B4AD9F4E145D135494C913 /* BentoLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE73979EBE12C60AC6E3408A /* BentoLayout.swift */; };
 		4EFFC22710DE065113C25D38 /* Sparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1391BD1F68F6CA4AD060043F /* Sparkline.swift */; };
 		5819DB590D4C8CCCE03E325C /* DashboardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0872674FF04EB1399B575B /* DashboardListView.swift */; };
+		6238D34BEDFB6A56D6FC3AE0 /* GlassSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6406555548F9259F6E496B /* GlassSurface.swift */; };
 		6B4ED0D8EB46AECFF66A014D /* SnapshotResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003DA0D8F4D0D76EDC1F4F23 /* SnapshotResponseTests.swift */; };
 		6D44645F9230F24F62132C30 /* SnapshotValueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8930EEF19F01EC6BF63AE76 /* SnapshotValueTests.swift */; };
 		703638ED7FA8934919A8BA99 /* WidgetCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108C73115A730D83FBB2E827 /* WidgetCardView.swift */; };
@@ -43,6 +44,7 @@
 		A35DEDDE0F598D3F4C52C27B /* BentoLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641CB75ECB7AFF26A59DA791 /* BentoLayoutTests.swift */; };
 		A6F50BA9302C1A0F77C29231 /* BentoDeckWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2078DF2D525B54FE32C99 /* BentoDeckWidgetBundle.swift */; };
 		A9BCF9B86478D4062FB14270 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82186DB409A9A0CB85E9AD23 /* LiveActivityManager.swift */; };
+		AA792F48836448B4651F0141 /* GlassSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6406555548F9259F6E496B /* GlassSurface.swift */; };
 		C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B989F6F04FE33D22987444 /* RefreshManager.swift */; };
 		C754DAB9E096A8609035B52C /* FocusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876AFAFB0EF140C67CC6D401 /* FocusView.swift */; };
 		E40CF7B52A18853611FDA9CA /* LockWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D5EC96F32468792ADF6AFE /* LockWidget.swift */; };
@@ -111,6 +113,7 @@
 		876AFAFB0EF140C67CC6D401 /* FocusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusView.swift; sourceTree = "<group>"; };
 		9041D7284BA9E60806816FA4 /* HomeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidget.swift; sourceTree = "<group>"; };
 		9B7D1F823812304C825523D4 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		AC6406555548F9259F6E496B /* GlassSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassSurface.swift; sourceTree = "<group>"; };
 		B5472249BA7F461F6B63D61A /* BentoDeckTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BentoDeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BentoDeckWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8E9E95EC7DC7745255B48CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -195,6 +198,7 @@
 				76C0CEF7AF390D1D6180D97F /* Config.swift */,
 				0631E05A0153DF5C1D6D0EBB /* Dashboard.swift */,
 				E4ED65B78D0E5DD02D181040 /* FocusSmartPick.swift */,
+				AC6406555548F9259F6E496B /* GlassSurface.swift */,
 				6652D4E97E4CA868E7281012 /* SharedStore.swift */,
 				1391BD1F68F6CA4AD060043F /* Sparkline.swift */,
 				C7250406F0CE2EE6D9B1A60F /* Theme.swift */,
@@ -374,6 +378,7 @@
 				FF6701E6DF7116E9FB2B5F85 /* DashboardDetailView.swift in Sources */,
 				5819DB590D4C8CCCE03E325C /* DashboardListView.swift in Sources */,
 				2C5779CF1C205E169F3D4E2D /* FocusSmartPick.swift in Sources */,
+				6238D34BEDFB6A56D6FC3AE0 /* GlassSurface.swift in Sources */,
 				F252BBF8F3609827C4D62CB7 /* InvestigationDetailView.swift in Sources */,
 				A9BCF9B86478D4062FB14270 /* LiveActivityManager.swift in Sources */,
 				C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */,
@@ -400,6 +405,7 @@
 				0176B4DCFA74000F0D9A3D90 /* FocusSmartPick.swift in Sources */,
 				C754DAB9E096A8609035B52C /* FocusView.swift in Sources */,
 				E415CFD4ED4D9B1EDD3AE8DF /* FocusWidget.swift in Sources */,
+				AA792F48836448B4651F0141 /* GlassSurface.swift in Sources */,
 				92AF8D8A5DA7E3A8F146132C /* HomeWidget.swift in Sources */,
 				E40CF7B52A18853611FDA9CA /* LockWidget.swift in Sources */,
 				7C2D1C8A1F3C4716AE765CEB /* Provider.swift in Sources */,

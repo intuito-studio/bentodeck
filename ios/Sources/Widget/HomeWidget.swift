@@ -8,7 +8,7 @@ struct HomeWidget: Widget {
         StaticConfiguration(kind: kind, provider: BentoTimelineProvider()) { entry in
             HomeWidgetView(entry: entry)
                 .containerBackground(for: .widget) {
-                    Color(hex: entry.theme.colors.background)
+                    WidgetBackground(entry: entry)
                 }
                 .widgetURL(deepLink(for: entry))
         }
@@ -202,12 +202,33 @@ struct HomeWidgetView: View {
         .padding(.horizontal, fontScale.hPad)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: fontScale.corner, style: .continuous)
-                .fill(Color(hex: entry.theme.colors.surface))
-                .overlay(
-                    RoundedRectangle(cornerRadius: fontScale.corner, style: .continuous)
-                        .stroke(Color(hex: entry.theme.colors.border), lineWidth: 0.5)
-                )
+            GlassSurface(
+                useGlass: entry.useGlass,
+                surfaceColor: Color(hex: entry.theme.colors.surface),
+                borderColor: Color(hex: entry.theme.colors.border),
+                cornerRadius: fontScale.corner
+            )
         )
+    }
+}
+
+/// Renders the widget's backdrop. Theme color when no image is set;
+/// dashboard background photo (with a slight darken overlay for legibility)
+/// when the user has picked one.
+struct WidgetBackground: View {
+    let entry: BentoEntry
+
+    var body: some View {
+        ZStack {
+            Color(hex: entry.theme.colors.background)
+            if entry.background == .image,
+               let data = entry.backgroundImageData,
+               let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                Color.black.opacity(0.25)
+            }
+        }
     }
 }

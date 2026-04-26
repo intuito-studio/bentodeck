@@ -1,5 +1,19 @@
 import Foundation
 
+/// What background a dashboard should render. Default is `.theme` — let
+/// the loaded theme's `colors.background` show through. `.image` signals
+/// that there's an image file at the canonical App Group path
+/// `backgrounds/{dashboardId}.jpg` that the app + widget should render.
+///
+/// We don't put the bytes in this enum — UserDefaults isn't a great place
+/// for ~MB-sized photo data — only the *kind*; the bytes live in a file.
+enum DashboardBackground: Codable, Hashable {
+    case theme
+    case image
+
+    static let `default` = DashboardBackground.theme
+}
+
 /// Per-dashboard layout customization the user has made on this device.
 /// Stored alongside the cached snapshot in the App Group UserDefaults so
 /// the app survives a relaunch with the same arrangement.
@@ -28,6 +42,7 @@ struct SharedStore {
     private let layoutStateKeyPrefix = "dashboard-layout-"
     private let dashboardsListKey = "all-dashboards"
     private let perDashboardSnapshotKeyPrefix = "snapshot-"
+    private let backgroundKindKeyPrefix = "background-"
 
     init() {
         self.defaults = UserDefaults(suiteName: Config.appGroupID)
@@ -122,5 +137,67 @@ struct SharedStore {
 
     private func layoutStateKey(_ dashboardId: String) -> String {
         layoutStateKeyPrefix + dashboardId
+    }
+
+    // MARK: - Per-dashboard background (Liquid Glass support)
+
+    func loadBackground(dashboardId: String) -> DashboardBackground {
+        guard let defaults,
+              let data = defaults.data(forKey: backgroundKindKey(dashboardId)),
+              let kind = try? JSONDecoder().decode(DashboardBackground.self, from: data) else {
+            return .default
+        }
+        return kind
+    }
+
+    func saveBackground(_ kind: DashboardBackground, dashboardId: String) {
+        guard let defaults, let data = try? JSONEncoder().encode(kind) else { return }
+        defaults.set(data, forKey: backgroundKindKey(dashboardId))
+    }
+
+    /// Write a JPEG-encoded photo into the App Group container's
+    /// `backgrounds/{dashboardId}.jpg` slot. Both the app and the widget
+    /// read from this path. Returns true on success.
+    @discardableResult
+    func saveBackgroundImage(_ data: Data, dashboardId: String) -> Bool {
+        guard let url = backgroundImageURL(dashboardId: dashboardId) else { return false }
+        do {
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try data.write(to: url, options: .atomic)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func loadBackgroundImageData(dashboardId: String) -> Data? {
+        guard let url = backgroundImageURL(dashboardId: dashboardId),
+              FileManager.default.fileExists(atPath: url.path) else {
+            return nil
+        }
+        return try? Data(contentsOf: url)
+    }
+
+    func clearBackgroundImage(dashboardId: String) {
+        guard let url = backgroundImageURL(dashboardId: dashboardId) else { return }
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    private func backgroundKindKey(_ dashboardId: String) -> String {
+        backgroundKindKeyPrefix + dashboardId
+    }
+
+    private func backgroundImageURL(dashboardId: String) -> URL? {
+        guard let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: Config.appGroupID
+        ) else {
+            return nil
+        }
+        return container
+            .appendingPathComponent("backgrounds", isDirectory: true)
+            .appendingPathComponent("\(dashboardId).jpg")
     }
 }

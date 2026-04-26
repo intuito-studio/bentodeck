@@ -1,5 +1,6 @@
 import SwiftUI
 import WidgetKit
+import PhotosUI
 
 struct DashboardDetailView: View {
     let dashboardId: String
@@ -8,6 +9,9 @@ struct DashboardDetailView: View {
     @State private var errorText: String?
     @State private var selectedInvestigation: SelectedInvestigation?
     @State private var editMode: Bool = false
+    @State private var background: DashboardBackground = .theme
+    @State private var backgroundImage: UIImage?
+    @State private var photoPickerItem: PhotosPickerItem?
     @StateObject private var layoutModel: BentoLayoutModel
 
     init(dashboardId: String) {
@@ -27,46 +31,16 @@ struct DashboardDetailView: View {
                 Color.clear
             }
         }
-        .background((snapshot.flatMap { Color(hex: $0.theme?.colors.background ?? "#000000") }) ?? .black)
+        .background(backgroundLayer)
         .navigationTitle(snapshot?.name ?? "Dashboard")
         .navigationBarTitleDisplayMode(.inline)
-        .task(id: dashboardId) { await reload() }
+        .task(id: dashboardId) {
+            loadBackground()
+            await reload()
+        }
         .refreshable { await reload() }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                if editMode {
-                    Button("Done") {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                            editMode = false
-                        }
-                    }
-                    .fontWeight(.semibold)
-                } else {
-                    Menu {
-                        Button {
-                            Task { await reload() }
-                        } label: {
-                            Label("Refresh", systemImage: "arrow.clockwise")
-                        }
-                        Button {
-                            withAnimation { editMode = true }
-                        } label: {
-                            Label("Edit Layout", systemImage: "rectangle.3.group")
-                        }
-                        if layoutModel.customized {
-                            Button(role: .destructive) {
-                                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-                                    layoutModel.reset()
-                                }
-                            } label: {
-                                Label("Reset Layout", systemImage: "arrow.counterclockwise")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-            }
+            ToolbarItem(placement: .topBarTrailing) { toolbarTrailing }
         }
         .navigationDestination(item: $selectedInvestigation) { selection in
             InvestigationDetailView(
@@ -74,6 +48,91 @@ struct DashboardDetailView: View {
                 widgetTitle: selection.widgetTitle,
                 theme: selection.theme
             )
+        }
+        .photosPicker(isPresented: photoPickerBinding, selection: $photoPickerItem, matching: .images)
+        .onChange(of: photoPickerItem) { _, newItem in
+            guard let newItem else { return }
+            Task { await applyPickedPhoto(newItem) }
+        }
+    }
+
+    @ViewBuilder
+    private var toolbarTrailing: some View {
+        if editMode {
+            Button("Done") {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    editMode = false
+                }
+            }
+            .fontWeight(.semibold)
+        } else {
+            Menu {
+                Button {
+                    Task { await reload() }
+                } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+                Button {
+                    withAnimation { editMode = true }
+                } label: { Label("Edit Layout", systemImage: "rectangle.3.group") }
+                if layoutModel.customized {
+                    Button(role: .destructive) {
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                            layoutModel.reset()
+                        }
+                    } label: { Label("Reset Layout", systemImage: "arrow.counterclockwise") }
+                }
+                Divider()
+                backgroundMenu
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var backgroundMenu: some View {
+        Menu {
+            Button {
+                setBackground(.theme)
+            } label: {
+                Label("Theme color", systemImage: background == .theme ? "checkmark" : "paintpalette")
+            }
+            Button {
+                photoPickerItem = nil  // reset so re-picking the same photo still triggers onChange
+                showPhotoPicker = true
+            } label: {
+                Label("Choose photo…", systemImage: "photo.on.rectangle.angled")
+            }
+            if background == .image {
+                Button(role: .destructive) {
+                    clearImage()
+                } label: { Label("Remove image", systemImage: "trash") }
+            }
+        } label: {
+            Label("Background", systemImage: "photo.artframe")
+        }
+    }
+
+    @State private var showPhotoPicker = false
+    private var photoPickerBinding: Binding<Bool> {
+        Binding(get: { showPhotoPicker }, set: { showPhotoPicker = $0 })
+    }
+
+    @ViewBuilder
+    private var backgroundLayer: some View {
+        let themeColor = (snapshot.flatMap { Color(hex: $0.theme?.colors.background ?? "#000000") }) ?? .black
+        ZStack {
+            themeColor
+            if background == .image, let backgroundImage {
+                Image(uiImage: backgroundImage)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                    .overlay(
+                        // Slight darkening so foreground text + glass cards
+                        // stay legible regardless of the photo's brightness.
+                        Color.black.opacity(0.25).ignoresSafeArea()
+                    )
+            }
         }
     }
 
@@ -94,7 +153,8 @@ struct DashboardDetailView: View {
                             theme: theme
                         )
                     }
-                }
+                },
+                useGlass: background == .image
             )
             .frame(maxHeight: .infinity)
 
@@ -140,6 +200,44 @@ struct DashboardDetailView: View {
                     .padding(.bottom, 12)
             }
         }
+    }
+
+    // MARK: - Background helpers
+
+    private func loadBackground() {
+        background = SharedStore.shared.loadBackground(dashboardId: dashboardId)
+        if background == .image,
+           let data = SharedStore.shared.loadBackgroundImageData(dashboardId: dashboardId),
+           let img = UIImage(data: data) {
+            backgroundImage = img
+        } else {
+            backgroundImage = nil
+        }
+    }
+
+    private func setBackground(_ kind: DashboardBackground) {
+        background = kind
+        SharedStore.shared.saveBackground(kind, dashboardId: dashboardId)
+        if kind == .theme {
+            backgroundImage = nil
+        }
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private func clearImage() {
+        SharedStore.shared.clearBackgroundImage(dashboardId: dashboardId)
+        setBackground(.theme)
+    }
+
+    private func applyPickedPhoto(_ item: PhotosPickerItem) async {
+        guard let data = try? await item.loadTransferable(type: Data.self) else { return }
+        guard let image = UIImage(data: data) else { return }
+        // Compress to ≤ ~1MB so the file lives comfortably in the App Group
+        // container and the widget extension can read it under tight memory.
+        guard let jpeg = image.jpegData(compressionQuality: 0.85) else { return }
+        SharedStore.shared.saveBackgroundImage(jpeg, dashboardId: dashboardId)
+        backgroundImage = image
+        setBackground(.image)
     }
 
     private func reload() async {

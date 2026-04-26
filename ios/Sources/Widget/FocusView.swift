@@ -11,14 +11,33 @@ struct FocusView: View {
     let widget: SnapshotWidget?
     let theme: Theme
     let lastRefreshedAt: Date?
+    var useGlass: Bool = false
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        if let widget {
-            content(widget: widget)
-        } else {
-            placeholder
+        Group {
+            if let widget {
+                content(widget: widget)
+            } else {
+                placeholder
+            }
         }
+        .padding(useGlass ? 14 : 0)
+        .background(
+            // Wrap the focus content in a glass surface when there's a
+            // background image — the whole tile gets the same liquid-glass
+            // treatment as the in-app cards.
+            Group {
+                if useGlass {
+                    GlassSurface(
+                        useGlass: true,
+                        surfaceColor: Color(hex: theme.colors.surface),
+                        borderColor: Color(hex: theme.colors.border),
+                        cornerRadius: 22
+                    )
+                }
+            }
+        )
     }
 
     // MARK: - Layout

@@ -42,6 +42,47 @@ final class SharedStoreTests: XCTestCase {
         XCTAssertEqual(store.pinnedDashboardId, "dash-2")
     }
 
+    func testBackgroundKindRoundtrip() throws {
+        try XCTSkipIf(testSuite == nil, "App Group suite unavailable in this test env")
+
+        let store = SharedStore()
+        let dashId = "dash-bg-test"
+        defer {
+            testSuite?.removeObject(forKey: "background-\(dashId)")
+        }
+
+        // Default is .theme.
+        XCTAssertEqual(store.loadBackground(dashboardId: dashId), .theme)
+
+        store.saveBackground(.image, dashboardId: dashId)
+        XCTAssertEqual(store.loadBackground(dashboardId: dashId), .image)
+
+        store.saveBackground(.theme, dashboardId: dashId)
+        XCTAssertEqual(store.loadBackground(dashboardId: dashId), .theme)
+    }
+
+    func testBackgroundImageFileRoundtrip() throws {
+        try XCTSkipIf(testSuite == nil, "App Group suite unavailable in this test env")
+
+        let store = SharedStore()
+        let dashId = "dash-bg-image-test"
+        let payload = "fake-image-bytes".data(using: .utf8)!
+        defer { store.clearBackgroundImage(dashboardId: dashId) }
+
+        XCTAssertNil(store.loadBackgroundImageData(dashboardId: dashId),
+                     "Should be nil when no image has been saved")
+
+        let saved = store.saveBackgroundImage(payload, dashboardId: dashId)
+        XCTAssertTrue(saved, "Saving background image to App Group container should succeed")
+
+        let loaded = store.loadBackgroundImageData(dashboardId: dashId)
+        XCTAssertEqual(loaded, payload, "Loaded bytes must match what was saved")
+
+        store.clearBackgroundImage(dashboardId: dashId)
+        XCTAssertNil(store.loadBackgroundImageData(dashboardId: dashId),
+                     "Clear must remove the file")
+    }
+
     func testSnapshotRoundtrip() throws {
         try XCTSkipIf(testSuite == nil, "App Group suite unavailable in this test env")
 
