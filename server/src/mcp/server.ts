@@ -330,6 +330,39 @@ export function buildMcpServer(baseUrl: string = resolveBaseUrl()): McpServer {
   );
 
   mcp.tool(
+    "discover_data_source",
+    "Read a platform's API documentation and emit a working REST endpoint to poll, all in one call. Use this when the user references a platform by name (Linear, Helius, GitHub, your own bespoke API) and you don't already know the exact endpoint. BentoDeck fetches the docs, asks Opus 4.7 to pick the right endpoint + headers + auth scheme, and verifies the call before persisting. The user's API key (if any) is substituted in safely — never log it.",
+    {
+      docsUrl: z
+        .string()
+        .url()
+        .describe(
+          "URL of the platform's API documentation page or the relevant section.",
+        ),
+      intent: z
+        .string()
+        .min(3)
+        .max(500)
+        .describe("What the user wants to monitor in plain English."),
+      apiKey: z
+        .string()
+        .optional()
+        .describe(
+          "User's API key, if the API requires auth. BentoDeck stores it server-side and substitutes it into the generated header.",
+        ),
+      name: z
+        .string()
+        .optional()
+        .describe("Friendly name for the data source. Defaults to the URL host."),
+    },
+    async (input) => {
+      const r = await call("POST", "/data-sources/discover", input);
+      if (!r.ok) return formatError("discover_data_source", r);
+      return json(r.data);
+    },
+  );
+
+  mcp.tool(
     "generate_theme",
     "Generate a new theme from a vibe prompt ('cyberpunk terminal', 'calm pastel notebook', 'minimal nordic', 'retro trading floor') using Opus 4.7. The theme is saved and, if dashboardId is provided, applied immediately.",
     {

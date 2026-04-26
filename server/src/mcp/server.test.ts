@@ -21,6 +21,7 @@ describe("MCP server registration", () => {
         "delete_dashboard",
         "set_dashboard_theme",
         "add_data_source",
+        "discover_data_source",
         "list_data_sources",
         "add_widget",
         "list_widgets",
@@ -30,6 +31,6 @@ describe("MCP server registration", () => {
         "generate_theme",
       ].sort(),
     );
-    expect(names).toHaveLength(13);
+    expect(names).toHaveLength(14);
   });
 });

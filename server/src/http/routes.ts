@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import { discoverDataSource } from "../ai/discoverer.js";
 import { planWidget } from "../ai/setup.js";
 import { generateTheme } from "../ai/theme.js";
 import {
@@ -93,6 +94,13 @@ const CreateWidgetFromIntentBody = z.object({
 const GenerateThemeBody = z.object({
   prompt: z.string().min(2).max(200),
   dashboardId: z.string().optional(),
+});
+
+const DiscoverDataSourceBody = z.object({
+  docsUrl: z.string().url(),
+  intent: z.string().min(3).max(500),
+  apiKey: z.string().optional(),
+  name: z.string().optional(),
 });
 
 /**
@@ -264,6 +272,41 @@ export function buildRoutes(): Hono {
           widget,
           plan,
           preview: { value: previewValue, error: previewError ?? null },
+        },
+        201,
+      );
+    },
+  );
+
+  // -------- AI-discovered data sources (Tier-2) --------
+
+  app.post(
+    "/data-sources/discover",
+    zValidator("json", DiscoverDataSourceBody),
+    async (c) => {
+      const body = c.req.valid("json");
+      const result = await discoverDataSource({
+        docsUrl: body.docsUrl,
+        intent: body.intent,
+        apiKey: body.apiKey,
+        name: body.name,
+      });
+      if (!result.ok) {
+        return c.json(
+          {
+            error: result.reason,
+            spec: result.spec ?? null,
+            bodyPreview: result.bodyPreview ?? null,
+          },
+          422,
+        );
+      }
+      const { authHeaderValue: _omit, ...safe } = result.source;
+      return c.json(
+        {
+          source: safe,
+          spec: result.spec,
+          sampleBodyPreview: result.sampleBodyPreview,
         },
         201,
       );
