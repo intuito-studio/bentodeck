@@ -121,10 +121,10 @@
 		9041D7284BA9E60806816FA4 /* HomeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidget.swift; sourceTree = "<group>"; };
 		9B7D1F823812304C825523D4 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		AC6406555548F9259F6E496B /* GlassSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassSurface.swift; sourceTree = "<group>"; };
-		B5472249BA7F461F6B63D61A /* BentoDeckTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BentoDeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BentoDeckWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5472249BA7F461F6B63D61A /* BentoDeckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BentoDeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BentoDeckWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8E9E95EC7DC7745255B48CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B9EA693CD52325641C144569 /* BentoDeck.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BentoDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B9EA693CD52325641C144569 /* BentoDeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BentoDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF02746382B308D8C8BDC49A /* JSONValueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValueTests.swift; sourceTree = "<group>"; };
 		C15FC58FBCDBC6B07B0D1019 /* BackgroundImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundImageCache.swift; sourceTree = "<group>"; };
 		C52F6926C9D194DED7E3E351 /* FocusIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusIntent.swift; sourceTree = "<group>"; };
@@ -314,15 +314,12 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					975D603E904453AF949F207F = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					C605573875F57C67112E22F0 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					FE719512D79C8FDBC1965A22 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -524,6 +521,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = BentoDeck.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -543,6 +541,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BentoDeckWidget.entitlements;
+				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -559,6 +558,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BentoDeckWidget.entitlements;
+				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -575,6 +575,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -656,6 +657,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = BentoDeck.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -675,6 +677,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

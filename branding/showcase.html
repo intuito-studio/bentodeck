@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BentoDeck — Logo Design Exploration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: #FAFAFA;
+            color: #1A1A1A;
+            overflow-x: hidden;
+        }
+        .font-mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 9999;
+        }
+        html { scroll-behavior: smooth; }
+        .logo-card { transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .logo-card:hover { transform: translateY(-4px); }
+        .logo-canvas { position: relative; transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .logo-aura {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+            border-radius: 50%; transform: scale(0.5); opacity: 0;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+            filter: blur(40px); pointer-events: none;
+        }
+        .logo-card:hover .logo-aura { transform: scale(1); opacity: 1; }
+        .divider-line {
+            width: 0; height: 1px; background: #1A1A1A; opacity: 0.2;
+            transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .logo-card:hover .divider-line { width: 100%; }
+        .tracking-ultra-wide { letter-spacing: 0.2em; }
+        .text-balance { text-wrap: balance; }
+
+        /* iOS app icon preview tile */
+        .app-icon-tile {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 22.5%;
+            background: linear-gradient(135deg, #1A1A1A 0%, #2C2C2C 100%);
+            color: #FAFAFA;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .app-icon-tile svg { width: 64%; height: 64%; }
+
+        /* Switch buttons */
+        .mode-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            padding: 10px 20px;
+            border: 1px solid rgba(0,0,0,0.15);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .mode-btn.active { background: #1A1A1A; color: #FAFAFA; border-color: #1A1A1A; }
+        .mode-btn:not(.active):hover { border-color: rgba(0,0,0,0.4); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const V1 = () => (
+            <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%'}}>
+                <g fill="currentColor">
+                    <rect x="18" y="18" width="38" height="38" rx="6"/>
+                    <rect x="60" y="18" width="22" height="17" rx="4"/>
+                    <rect x="60" y="39" width="22" height="17" rx="4"/>
+                    <rect x="18" y="60" width="64" height="22" rx="5"/>
+                </g>
+            </svg>
+        );
+
+        const V2 = () => (
+            <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%'}}>
+                <rect x="20" y="20" width="27" height="27" rx="5" fill="currentColor"/>
+                <rect x="53" y="20" width="27" height="27" rx="5" fill="none" stroke="currentColor" strokeWidth="3.5"/>
+                <rect x="20" y="53" width="27" height="27" rx="5" fill="none" stroke="currentColor" strokeWidth="3.5"/>
+                <rect x="53" y="53" width="27" height="27" rx="5" fill="currentColor"/>
+            </svg>
+        );
+
+        const V3 = () => (
+            <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%'}}>
+                <rect x="18" y="18" width="40" height="32" rx="5" fill="currentColor"/>
+                <rect x="62" y="18" width="20" height="32" rx="4" fill="currentColor"/>
+                <rect x="18" y="54" width="64" height="28" rx="5" fill="none" stroke="currentColor" strokeWidth="3"/>
+                <path d="M 26 70 L 34 70 L 38 62 L 44 78 L 50 64 L 56 72 L 74 72"
+                      fill="none" stroke="currentColor" strokeWidth="2.5"
+                      strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+        );
+
+        const V4 = () => (
+            <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%'}}>
+                <rect x="18" y="18" width="40" height="64" rx="6" fill="currentColor"/>
+                <rect x="62" y="18" width="20" height="20" rx="4" fill="none" stroke="currentColor" strokeWidth="3"/>
+                <rect x="62" y="42" width="20" height="20" rx="4" fill="currentColor"/>
+                <circle cx="72" cy="76" r="6" fill="currentColor"/>
+            </svg>
+        );
+
+        const V5 = () => (
+            <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%'}}>
+                <defs>
+                    <mask id="etch5">
+                        <rect width="100" height="100" fill="white"/>
+                        <line x1="55" y1="22" x2="55" y2="78" stroke="black" strokeWidth="3.5" strokeLinecap="round"/>
+                        <line x1="55" y1="46" x2="78" y2="46" stroke="black" strokeWidth="3.5" strokeLinecap="round"/>
+                        <line x1="22" y1="58" x2="55" y2="58" stroke="black" strokeWidth="3.5" strokeLinecap="round"/>
+                    </mask>
+                </defs>
+                <rect x="18" y="18" width="64" height="64" rx="8" fill="currentColor" mask="url(#etch5)"/>
+            </svg>
+        );
+
+        const V6 = () => (
+            <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%'}}>
+                <defs>
+                    <mask id="deck6">
+                        <rect x="18" y="22" width="56" height="48" rx="6" fill="white"/>
+                        <line x1="46" y1="28" x2="46" y2="64" stroke="black" strokeWidth="2.8" strokeLinecap="round"/>
+                        <line x1="46" y1="46" x2="68" y2="46" stroke="black" strokeWidth="2.8" strokeLinecap="round"/>
+                    </mask>
+                </defs>
+                <g fill="currentColor">
+                    <rect x="26" y="38" width="56" height="48" rx="6" opacity="0.22"/>
+                    <rect x="22" y="30" width="56" height="48" rx="6" opacity="0.5"/>
+                    <rect x="18" y="22" width="56" height="48" rx="6" mask="url(#deck6)"/>
+                </g>
+            </svg>
+        );
+
+        const logos = [
+            {
+                Component: V1,
+                title: "The Bento",
+                subtitle: "01 — ASYMMETRIC FILL",
+                philosophy: "The canonical bento layout: one anchor cell holding the headline metric, two stacked sidekicks for secondary KPIs, a wide footer for the timeline. Pure filled geometry, zero ornament. Reads instantly as 'compartmentalized glance' at any scale."
+            },
+            {
+                Component: V2,
+                title: "The Quad",
+                subtitle: "02 — ALTERNATING WEIGHT",
+                philosophy: "A 2×2 bento where filled and outlined cells trade diagonal positions. The visual rhythm hints at the polling cycle — alternating states, refreshing in place. Most symmetric of the set; calmest at favicon size."
+            },
+            {
+                Component: V3,
+                title: "The Live Cell",
+                subtitle: "03 — DATA-ACTIVE",
+                philosophy: "Bento with one cell holding a literal pulse line. Communicates 'these aren't static cards — there's a heartbeat behind them.' The most narrative-rich variant; closest to telling the BentoDeck story in a single mark."
+            },
+            {
+                Component: V4,
+                title: "The Signal",
+                subtitle: "04 — ANOMALY DOT",
+                philosophy: "Asymmetric bento with one cell broken — replaced by a bold dot. References the four-layer cost gate: most cells are quiet, one fires. The dot is the wrist-buzz moment, the only thing the eye lands on."
+            },
+            {
+                Component: V5,
+                title: "The Etched Bento",
+                subtitle: "05 — SINGLE MASS",
+                philosophy: "One solid rounded square with bento dividers carved out as negative space. The most app-icon-native of the set: a single bold mass that survives small sizes and works on any background. Silent and confident."
+            },
+            {
+                Component: V6,
+                title: "The Deck",
+                subtitle: "06 — STACKED LAYERS",
+                philosophy: "Three bento cards offset behind each other, the front card etched with dividers. Embraces the literal wordmark — bento + deck. Multiple dashboards, one glance. The richest, most narrative variant."
+            }
+        ];
+
+        const LogoShowcase = () => {
+            const [mode, setMode] = useState('canvas'); // 'canvas' or 'icon'
+
+            return (
+                <div className="min-h-screen flex flex-col items-center py-20 px-6">
+
+                    {/* Header */}
+                    <div className="text-center mb-12 max-w-3xl">
+                        <h1 className="text-6xl md:text-7xl font-extralight tracking-wider mb-6">
+                            BentoDeck
+                        </h1>
+                        <p className="font-mono text-xs opacity-40 uppercase tracking-ultra-wide mb-8">
+                            App Icon Exploration · Six Bento Studies
+                        </p>
+                        <div className="w-12 h-[1px] bg-[#1A1A1A] mx-auto opacity-30"></div>
+                    </div>
+
+                    {/* Mode switcher */}
+                    <div className="mb-16 flex gap-0">
+                        <button
+                            className={`mode-btn ${mode === 'canvas' ? 'active' : ''}`}
+                            onClick={() => setMode('canvas')}
+                        >Mark</button>
+                        <button
+                            className={`mode-btn ${mode === 'icon' ? 'active' : ''}`}
+                            onClick={() => setMode('icon')}
+                        >iOS Tile</button>
+                    </div>
+
+                    {/* Logo Grid */}
+                    <div className="max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 mb-32">
+                        {logos.map((logo, index) => (
+                            <div key={index} className="flex flex-col items-center logo-card cursor-pointer">
+
+                                <div className="w-64 h-64 mb-10 flex items-center justify-center relative">
+                                    <div className="logo-aura"></div>
+                                    {mode === 'canvas' ? (
+                                        <div className="w-32 h-32 relative z-10 logo-canvas">
+                                            <logo.Component />
+                                        </div>
+                                    ) : (
+                                        <div className="w-44 h-44 app-icon-tile relative z-10 logo-canvas">
+                                            <logo.Component />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="text-center w-full px-4">
+                                    <h2 className="text-xl font-medium tracking-wider mb-2 uppercase">
+                                        {logo.title}
+                                    </h2>
+                                    <h3 className="text-xs font-mono opacity-50 tracking-widest mb-6">
+                                        {logo.subtitle}
+                                    </h3>
+                                    <p className="text-sm leading-relaxed opacity-70 text-left font-light text-balance">
+                                        {logo.philosophy}
+                                    </p>
+                                </div>
+
+                                <div className="divider-line mt-8 mx-auto"></div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Scale comparison strip */}
+                    <div className="max-w-5xl w-full mb-24">
+                        <p className="font-mono text-xs opacity-40 uppercase tracking-ultra-wide mb-8 text-center">
+                            Scale check — favicon to icon
+                        </p>
+                        <div className="grid grid-cols-6 gap-6">
+                            {logos.map((logo, i) => (
+                                <div key={i} className="flex flex-col items-center gap-4">
+                                    <div className="w-4 h-4"><logo.Component /></div>
+                                    <div className="w-8 h-8"><logo.Component /></div>
+                                    <div className="w-16 h-16"><logo.Component /></div>
+                                    <p className="font-mono text-[10px] opacity-40">0{i+1}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-8 max-w-2xl text-center">
+                        <p className="font-mono text-xs opacity-40 uppercase tracking-ultra-wide leading-loose">
+                            Generated with Logo Generator<br/>
+                            BentoDeck · 2026
+                        </p>
+                    </div>
+
+                </div>
+            );
+        };
+
+        ReactDOM.render(<LogoShowcase />, document.getElementById('root'));
+    </script>
+</body>
+</html>

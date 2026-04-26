@@ -9,17 +9,19 @@ a fresh clone to "stop recording."
 
 ## Pre-flight checklist (do this 30 minutes before recording)
 
-- [ ] Backend up: `cd server && npm start` — wait for `HTTP listening on http://localhost:3737`
-- [ ] `curl -sS http://localhost:3737/health` returns `{"ok":true,...}`
-- [ ] Anomaly state reset: `npm run demo:reset` from `server/`
-- [ ] Demo dashboard seeded: `npm run seed-demo` (creates "SaaS Health" with 3 widgets)
-- [ ] iOS app is installed on the device or simulator and shows the 3-widget dashboard
-- [ ] BentoDeck widgets are placed on the Home Screen + Lock Screen of the recording device
-- [ ] Claude Desktop has `bentodeck` listed under MCP servers (settings → connectors)
-- [ ] Anthropic API key has Opus 4.7 access and at least a few dollars of credit
-- [ ] Recording app is running (QuickTime → New Movie / Screen Recording, or Loom)
-- [ ] Phone is on Do Not Disturb to suppress unrelated banners
-- [ ] Wi-Fi is stable; hotspot off; unrelated terminals closed
+- Backend up: `cd server && npm start` — wait for `HTTP listening on http://localhost:3737`
+- `curl -sS http://localhost:3737/health` returns `{"ok":true,...}`
+- Anomaly state reset: `npm run demo:reset` from `server/`
+- Demo dashboard seeded: `npm run seed-demo` (creates "SaaS Health" with 3 widgets)
+- iOS Simulator running (iPhone 17 Pro) with the app installed and the 3-widget dashboard visible
+- BentoDeck widgets are placed on the simulator's Home Screen + Lock Screen
+- Claude has `bentodeck` listed under MCP servers (settings → connectors)
+- Anthropic API key has Opus 4.7 access and at least a few dollars of credit
+- Screen recording is running (QuickTime → File → New Screen Recording, or Loom) with system audio + mic capture
+- Mic is on the right input; do a 5-second test recording and play it back
+- macOS notifications muted (Focus → Do Not Disturb) so banners don't intrude on the recording
+- Unrelated apps quit; only the simulator, Claude, two terminals, and the recorder are open
+- Wi-Fi is stable; unrelated terminals closed
 
 If any item fails, fix it now — none of these are recoverable mid-recording.
 
@@ -78,29 +80,29 @@ In Xcode:
 
 1. Select the **BentoDeck** target → **Signing & Capabilities** → set Team to your free personal Apple ID.
 2. Repeat for the **BentoDeckWidget** target (same team — App Groups must match).
-3. **For a physical iPhone:** open `Sources/Shared/Config.swift` and change `http://localhost:3737` to your Mac's LAN IP (e.g. `http://192.168.1.42:3737`). Find the IP with `ipconfig getifaddr en0`.
-4. **For the simulator:** leave `localhost`. Pick "iPhone 17 Pro" as the destination.
-5. `⌘R` — first launch installs the widget extension; this can take 30–60 seconds.
-6. On a real phone, accept the "Untrusted Developer" prompt: Settings → General → VPN & Device Management → trust.
+3. Pick **iPhone 17 Pro** as the destination (it has Dynamic Island, which Beat 4 relies on). Leave `Sources/Shared/Config.swift` pointing at `http://localhost:3737`.
+4. `⌘R` — first launch installs the widget extension; this can take 30–60 seconds.
 
 ### 4. Place widgets on the Home Screen + Lock Screen
 
-**Home Screen:**
+> Everything below happens inside the iOS Simulator. Use **click-and-hold** wherever it says "long-press." Useful simulator shortcuts: `⌘L` to lock, `⇧⌘H` for the Home Screen, `⌘1` / `⌘2` / `⌘3` to scale the window.
 
-1. Long-press an empty space → tap `+` (top-left)
+**Home Screen (in the simulator):**
+
+1. Click-and-hold an empty space → tap `+` (top-left)
 2. Search "BentoDeck" — you'll see two widgets:
-   - **BentoDeck** — multi-widget tile grid (Small / Medium / Large / Extra-Large)
-   - **BentoDeck — Focus** — single widget at full size
+  - **BentoDeck** — multi-widget tile grid (Small / Medium / Large / Extra-Large)
+  - **BentoDeck — Focus** — single widget at full size
 3. For the recording I recommend placing both: a Medium grid widget *and* a Large Focus widget.
-4. After dropping the Focus widget, long-press it → **Edit Widget** → leave the picker on "Auto" + "Smart" (it will pick the anomalous widget when one fires).
+4. After dropping the Focus widget, click-and-hold it → **Edit Widget** → leave the picker on "Auto" + "Smart" (it will pick the anomalous widget when one fires).
 
-**Lock Screen:**
+**Lock Screen (in the simulator):**
 
-1. Long-press the Lock Screen → **Customize** → **Lock Screen**
+1. `⌘L` to lock, then click-and-hold the Lock Screen → **Customize** → **Lock Screen**
 2. Tap the widget area below the clock → tap an empty slot → search "BentoDeck"
 3. Pick the rectangular widget. (Circular and inline are also available.)
 
-### 5. Claude Desktop
+### 5. Claude
 
 Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -119,7 +121,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ```
 
 Replace `/absolute/path/to` with your real path (`pwd` from `bentodeck/`
-prints it). Save the file. **Quit Claude Desktop completely** (`⌘Q` — the
+prints it). Save the file. **Quit Claude completely** (`⌘Q` — the
 menu-bar quit, not just closing the window) and relaunch.
 
 Verify the connection: in a fresh chat, type "what MCP tools do I have?" —
@@ -144,7 +146,7 @@ You should see three live widgets with values updating every 5s.
 ## Demo control commands
 
 These are the buttons you press during recording. All of them work
-regardless of what Claude Desktop is doing.
+regardless of what Claude is doing.
 
 ```bash
 cd server
@@ -169,81 +171,158 @@ npm run demo:seed-investigation
 
 ## The 3-minute script
 
-The submission video is 3 minutes. The locked story has 6 beats; if
-something breaks live, skip beat 3 (Tier-2 discovery) — it's the only
-optional one.
+The submission video is 3 minutes. **Assume the judge knows nothing
+about your stack** — not Claude, not MCP, not iOS widgets.
+Every beat earns its existence by either showing something or
+explaining the thing that's about to happen, never both.
 
-### Beat 0 — Cold open (0:00–0:10)
+The locked story has 6 beats. If something breaks live, skip beat 3
+(Tier-2 discovery) — it's the only optional one. Trim 5 seconds from
+each remaining beat to recover.
 
-> *Camera on you, or on the iPhone Home Screen.*
+> **Tone note:** read everything below as if to a friend who's never
+> seen the project. Conversational, not pitch-y. Don't say "leveraging."
+> Don't say "powered by." Say what you did and what happened.
 
-**Say:** "I check my SaaS dashboard 30 times a day. It's always trapped behind a login on a laptop. Today I'm going to put it on my iPhone Home Screen — by talking to Claude."
+### Beat 0 — Who I am, what hurts (0:00–0:25)
 
-**Do:** Show the iPhone Home Screen with the BentoDeck widgets visible. Tap into the iOS app to show the empty/ready state.
+> *Voiceover only — no face on camera. The whole video is a screen
+> recording.*
+>
+> **On screen:** a desktop crowded with 6 browser tabs already open —
+> Vercel, Firebase console, GCP console, a billing dashboard, an error
+> tracker, a CI pipeline. Slowly cycle Cmd+ (or click) through 3–4 of
+> them so the judge sees the chaos. Then `⇧⌘H` in the iOS Simulator and
+> let the camera land on a clean Simulator Home Screen with the BentoDeck
+> widgets present but empty / awaiting data.
 
-### Beat 1 — Conversation → live widget (0:10–0:55)
+**Say (slow, natural, as voiceover):**
 
-> *Cut to Claude Desktop on screen.*
+> "I'm Morris. I run Intuito Studio. We build custom software solutions  
+> for clients, so on any given day I'm running four or five different  
+> systems across different projects. Some live on Vercel, some on  
+> Firebase, some on GCP — plus the billing dashboards, the error  
+> trackers, the CI pipelines. I check all of those probably thirty times  
+> a day. They live in browser tabs on my laptop. None of them are on my  
+> phone, because every vendor's app has its own login, its own UI, its  
+> own headache.
+>
+> So I built BentoDeck. I tell Claude what I want to see, and it ends up
+> on my iPhone Home Screen. Let me show you."
 
-**Type into Claude Desktop:**
+### Beat 1 — Conversation → live widget (0:25–1:05)
 
-```
-Show me Stripe MRR, today's signups, and critical errors on my Home
-Screen. Use the /demo/* endpoints on localhost:3737.
-```
+> *Cut to Claude. Make sure the BentoDeck MCP server is visible
+> in the connectors panel before you start typing — judges should see
+> "this is wired up to something real."*
 
-**What you'll see:**
+**Say first, before typing:**
 
-- Claude calls `create_dashboard` → `add_data_source` (×3) → `create_widget_from_intent` (×3)
-- Each `create_widget_from_intent` shows Opus 4.7 inferring the JMESPath transform from the sample API response
-- Claude reports back the widget IDs
+> "Claude talks to my BentoDeck server through MCP — that's the
+> protocol that lets Claude call into outside systems. Watch what
+> happens when I just describe what I want."
 
-**Cut to phone:** pull-to-refresh in the BentoDeck app — the new dashboard
-appears within ~5s. Tap into "SaaS Health". The bento grid auto-arranges
-the three widgets: wide Stripe MRR on top, two squares (Signups, Errors)
-below.
-
-**Say:** "Three widgets. No forms. Opus 4.7 wrote the JMESPath transforms by reading the sample response."
-
-### Beat 2 — Theming (0:55–1:25)
-
-**Type into Claude Desktop:**
-
-```
-Make it retro trading floor — green-on-black terminal aesthetic.
-```
-
-**What you'll see:**
-
-- Claude calls `generate_theme`
-- Opus 4.7 emits a complete WCAG-checked theme JSON
-- Claude reports the theme is applied
-
-**Cut to phone:** the dashboard re-skins live. Cards, fonts, sparkline
-colors, anomaly chip — everything updates without a relaunch.
-
-**Say:** "One sentence. The whole dashboard re-skinned. The Lock Screen widget too — same theme cascades to every surface."
-
-### Beat 3 — Tier-2 discovery (1:25–1:55) *[optional, skip if running short]*
-
-**Type into Claude Desktop:**
+**Type into Claude:**
 
 ```
-Also monitor my Linear backlog count.
+Show me Stripe MRR, today's signups, and critical errors on my
+Home Screen. Use the /demo/ endpoints on localhost.
 ```
 
-**What you'll see:**
+**While Claude works (15–20 seconds), narrate over the tool calls:**
 
-- Claude calls `discover_data_source` with the docs URL
-- Opus 4.7 reads Linear's REST docs, picks the right endpoint, generates the auth header with a `{{API_KEY}}` placeholder
-- The endpoint is verified against a test request before being persisted
-- A new widget appears
+> "Claude is creating a dashboard, registering three data sources, and
+> for each one it's hitting the API once to grab a sample response.
+> Then Opus 4.7 reads that sample and writes the transformation that
+> pulls out the right number — no field-mapping forms, no config UI."
 
-**Say:** "No connector catalog. Any public API with documentation works on day one."
+**Cut to the simulator (let Claude's tool calls finish off-screen — judges
+follow the artifact, not the process):**
 
-### Beat 4 — Anomaly fires (1:55–2:25)
+- Pull-to-refresh in the BentoDeck app → "SaaS Health" appears
+- Tap in. The bento grid auto-arranges: wide Stripe MRR card on top,
+two squares (Signups · Errors) below
+- `⇧⌘H` to the Home Screen for a half-second to show the home-screen
+widget already populated with the same numbers
 
-> *Switch to a second terminal you've kept ready.*
+**Say:**
+
+> "Three widgets. Thirty seconds. No forms."
+
+### Beat 2 — Theming (1:05–1:30)
+
+> *Back to Claude.*
+
+**Say first:**
+
+> "It looks fine. But it's mine, and I want it to feel like mine.
+> Watch this."
+
+**Type:**
+
+```
+Make it look like Anthropic — warm cream background, soft terracotta
+accents, the Claude vibe. Friendly serif for the numbers if it works.
+```
+
+**Cut to the simulator before Claude is fully done.** The theme cascade
+is the visual punchline — let it happen on screen.
+
+- Cards re-skin: cream/ivory background, terracotta accent, warm tones
+- Lock Screen widget re-skins to match
+- Home Screen widget re-skins to match
+
+**Say:**
+
+> "One sentence. Opus 4.7 wrote a full color theme — checked the contrast
+> ratios for accessibility — and it cascaded everywhere. The app, the
+> Home Screen widget, the Lock Screen widget. Same theme, every surface.
+> A nice meta-touch: the dashboard now looks like the model that
+> generated it."
+
+### Beat 3 — Add Vercel, no token in chat (1:30–1:55) *[optional, skip if running short]*
+
+> *Back to Claude.* Callback to Beat 0 — the judge already heard you
+> mention Vercel; now it's hooked up live.
+>
+> **Pre-flight:** generate a Vercel API token from
+> [vercel.com/account/tokens](https://vercel.com/account/tokens) and
+> have it on your clipboard. You'll paste it into the iOS app, never
+> into Claude.
+
+**Say first:**
+
+> "Earlier I mentioned Vercel. BentoDeck doesn't ship a Vercel
+> connector — I'll just point Claude at the docs. And notice I'm not
+> giving Claude my API token."
+
+**Type (no token in the prompt):**
+
+```
+Also show me my latest Vercel deployments. Here are the API docs:
+https://vercel.com/docs/rest-api/reference/endpoints/deployments
+```
+
+**Cut to the simulator.** A new "Vercel deployments" card lands on the
+dashboard with a lock icon and "Tap to add API key."
+
+**Tap the card.** A SecureField sheet slides up. Paste, tap Save. The
+sheet dismisses; the card flips to live deployment data.
+
+**Say (over the verify → live-data transition):**
+
+> "Token goes straight into the app, never through the chat. Any public
+> API with docs works on day one — same path would handle GitHub,
+> Linear, PostHog, whatever you point at it."
+
+### Beat 4 — Anomaly detected, live on the dashboard (1:55–2:25)
+
+> *Stay in the iOS app on the Home dashboard. Switch to your second
+> terminal — kept ready, already in `server/`.*
+
+**Say first:**
+
+> "Okay, the dashboard's pretty. Here's why I actually built this."
 
 **Run:**
 
@@ -251,35 +330,46 @@ Also monitor my Linear backlog count.
 npm run demo:spike
 ```
 
-**What you'll see (within 5–10s):**
+**Within 5–10 seconds, on the dashboard:**
 
-1. Server log: `[anomaly] errors widget z=∞ → AI call`
-2. iPhone gets a Local Notification: *"Critical errors spiked from 0 → 47 against a 15-minute zero baseline"*
-3. Lock Screen Live Activity appears with the same sentence
-4. Dynamic Island shows the compact representation
+1. The Critical errors widget flips from `ZERO` (green) to `47` with a
+  red warning triangle in the top-right of the card.
+2. Tap the card — the anomaly sentence Claude wrote appears underneath:
+  *"Critical errors spiked from 0 → 47 against a 15-minute zero
+  baseline."*
 
-**Cut to phone:** show the Lock Screen banner. Then tap the Live Activity
-to open the app.
+**Say:**
 
-**Say:** "Z-score gate, 20-call-per-day cap, value-unchanged short-circuit. Opus 4.7 only writes the sentence when something genuinely changed. Projected cost: 15 cents per user per month."
+> "The server polled the source on its own  
+> schedule, saw the spike, ran it past a cost gate, and only then asked  
+> Claude to explain it. There's a statistical pre-filter so idle drift  
+> doesn't burn API budget — projected cost is fifteen cents per user  
+> per month, even though every anomaly sentence is a live Opus 4.7 call."
 
-### Beat 5 — Tap-to-investigate, streaming runbook (2:25–2:50)
+### Beat 5 — Tap → Managed Agent investigation (2:25–2:50)
 
-> *In the recorded version, run `npm run demo:seed-investigation` in your other terminal RIGHT BEFORE you tap. The pre-canned report has the same shape the real Managed Agents session produces but streams in over ~3.5s, perfect for the recording.*
+> *Right before you tap the banner, run `npm run demo:seed-investigation`
+> in your second terminal so the report streams in deterministically.
+> The shape matches what the real Managed Agents session produces; the
+> recording trick is just timing.*
 
-In the app, tap the anomaly banner. The InvestigationDetailView opens
-and the multi-paragraph runbook streams in as Markdown:
+**Tap the anomaly banner on the Critical errors card.**
 
-- Headline ("Critical errors spiked from 0 → 47…")
-- "What likely happened" — three causes
-- "What to check first" — five action items
-- "Blast radius" — SLO impact
+**As the report streams in (~3.5 seconds), narrate:**
 
-**Say:** "While the wrist-buzz fires, a Claude Managed Agent is investigating in a sandboxed container with web_search, bash, and file tools. By the time I look, the runbook is here."
+> "While the banner fired, a separate Claude Managed Agent went off to
+> investigate. It's running in a sandboxed cloud container with web
+> search, bash, and file tools. It's not a chat completion — it's a
+> long-running session. By the time I tap, the report is already
+> writing itself."
 
-### Beat 6 — Loop back (2:50–3:00)
+**Let the headline land on screen:** *"Critical errors spiked from
+0 → 47 against a 15-minute zero baseline."* Then "What likely
+happened," then "What to check first," then "Blast radius."
 
-> *Cut back to Claude Desktop.*
+### Beat 6 — Close the loop (2:50–3:00)
+
+> *Cut back to Claude.*
 
 **Type:**
 
@@ -287,26 +377,48 @@ and the multi-paragraph runbook streams in as Markdown:
 What does the investigation say? Suggest a mitigation.
 ```
 
-**What you'll see:**
+**Claude reads the report and recommends a fix.**
 
-- Claude calls `get_investigation`
-- Summarizes the report, suggests a fix (typically: flip the feature flag, check the deploy timestamp)
+**Say (final line, voiceover over the chat):**
 
-**Say (closing line):** "Conversation, ambient surface, deep investigation, conversation. That's the loop. BentoDeck is open source. Link in the description."
+> "Conversation in. Glance out. Investigation in. Conversation out.
+> That's the loop. BentoDeck is open source — link's below."
+
+> *End on the repo URL on screen for 2 seconds.*
 
 ---
 
+## Phrase bank — what to say if you go off-script
+
+When something stalls and you need filler that *adds value* instead of
+sounding like an apology:
+
+- *"While that's loading, let me say what's happening under the hood…"*
+→ buy 8–10 seconds with a one-line technical explainer.
+- *"I should mention — none of this is hardcoded. The server doesn't know
+what 'MRR' means. Opus 4.7 figures that out from the API response."*
+- *"This is what Anthropic calls Managed Agents. It's a different API
+surface from the chat completions you might've seen — these sessions
+can run for minutes."*
+- *"The whole thing is open source. MIT license. The repo's in the
+description."*
+
 ## If something goes wrong on camera
 
-| Symptom | Fast recovery |
-|---|---|
-| Widget shows old data | Pull-to-refresh in the app |
-| Widget shows "Backend returned HTTP 404" | The pinned dashboard ID is stale — back out to the list, tap into a dashboard again |
-| Anomaly doesn't fire | Run `npm run demo:reset` then `npm run demo:spike` again |
-| Live Activity doesn't appear | Foreground the app once after the spike — first activity request needs the app to be active |
-| Investigation doesn't stream | Run `npm run demo:seed-investigation` *before* tapping the banner |
-| Claude Desktop shows MCP error | `pwd` in the server folder, ensure the path in `claude_desktop_config.json` matches, ⌘Q Claude Desktop, relaunch |
-| Theme didn't apply | The theme generator can take 5–10s on first call (cold cache); just wait for Claude's reply |
+
+| Symptom                                          | Fast recovery                                                                                                    |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Widget shows old data                            | Pull-to-refresh in the app                                                                                       |
+| Widget shows "Backend returned HTTP 404"         | The pinned dashboard ID is stale — back out to the list, tap into a dashboard again                              |
+| Anomaly doesn't fire                             | Run `npm run demo:reset` then `npm run demo:spike` again                                                         |
+| Live Activity doesn't appear                     | Foreground the app once after the spike — first activity request needs the app to be active                      |
+| Investigation doesn't stream                     | Run `npm run demo:seed-investigation` *before* tapping the banner                                                |
+| Claude shows MCP error                           | `pwd` in the server folder, ensure the path in `claude_desktop_config.json` matches, ⌘Q Claude, relaunch         |
+| Theme didn't apply                               | The theme generator can take 5–10s on first call (cold cache); just wait for Claude's reply                      |
+| Vercel "Connect" card doesn't appear             | Pull-to-refresh the dashboard. The discoverer takes ~10–15s to fetch + parse Vercel's docs before the row lands. |
+| Vercel key fails to save (HTTP 401 in the sheet) | Token is rejected — generate a fresh one at vercel.com/account/tokens. The card stays in needs-key state.        |
+| You forget your line                             | Pause, breathe, look at the screen. The artifact does the talking. The judges already saw what happened.         |
+
 
 ---
 
@@ -321,11 +433,11 @@ What does the investigation say? Suggest a mitigation.
 
 ## Submission checklist
 
-- [ ] Recording uploaded to YouTube (unlisted is fine) or Loom
-- [ ] Repo URL on screen at the end of the video
-- [ ] [SUBMISSION.md](./SUBMISSION.md) updated with prize-track mapping
-- [ ] Repo is **public** before the deadline
-- [ ] LICENSE is MIT and present at the repo root
-- [ ] Submission form filled in on the hackathon site
+- Recording uploaded to YouTube (unlisted is fine) or Loom
+- Repo URL on screen at the end of the video
+- [SUBMISSION.md](./SUBMISSION.md) updated with prize-track mapping
+- Repo is **public** before the deadline
+- LICENSE is MIT and present at the repo root
+- Submission form filled in on the hackathon site
 
 Good luck. 🎬
