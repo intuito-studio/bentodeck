@@ -36,6 +36,13 @@ struct DashboardDetailView: View {
         // active and binds it to the navigation title).
         .task(id: dashboardId) {
             loadBackground()
+            // Render whatever's cached so the carousel doesn't flash a
+            // ProgressView when the user swipes onto this page; the live
+            // refresh continues asynchronously.
+            if snapshot == nil,
+               let cached = SharedStore.shared.loadSnapshot(forDashboard: dashboardId)?.snapshot {
+                snapshot = cached
+            }
             await reload()
         }
         .refreshable { await reload() }
@@ -206,13 +213,11 @@ struct DashboardDetailView: View {
 
     private func loadBackground() {
         background = SharedStore.shared.loadBackground(dashboardId: dashboardId)
-        if background == .image,
-           let data = SharedStore.shared.loadBackgroundImageData(dashboardId: dashboardId),
-           let img = UIImage(data: data) {
-            backgroundImage = img
-        } else {
-            backgroundImage = nil
-        }
+        // Use the shared cache so swipes don't re-decode multi-MB JPEGs on
+        // every page render. The cache invalidates by file mtime.
+        backgroundImage = background == .image
+            ? BackgroundImageCache.shared.image(forDashboardId: dashboardId)
+            : nil
     }
 
     private func setBackground(_ kind: DashboardBackground) {
@@ -226,6 +231,7 @@ struct DashboardDetailView: View {
 
     private func clearImage() {
         SharedStore.shared.clearBackgroundImage(dashboardId: dashboardId)
+        BackgroundImageCache.shared.invalidate(dashboardId: dashboardId)
         setBackground(.theme)
     }
 
@@ -236,6 +242,7 @@ struct DashboardDetailView: View {
         // container and the widget extension can read it under tight memory.
         guard let jpeg = image.jpegData(compressionQuality: 0.85) else { return }
         SharedStore.shared.saveBackgroundImage(jpeg, dashboardId: dashboardId)
+        BackgroundImageCache.shared.invalidate(dashboardId: dashboardId)
         backgroundImage = image
         setBackground(.image)
     }

@@ -42,56 +42,87 @@ struct RootView: View {
 
     // MARK: - Carousel
 
+    @State private var scrolledPage: Int? = 1
+
     private var carousel: some View {
-        // Triple-buffer the dashboards: [last, ...real, first]. This gives
-        // the user a duplicate-last page on the left of the first dashboard
-        // and a duplicate-first page on the right of the last one, so the
-        // physical swipe always succeeds. After the swipe lands on a
-        // duplicate, we snap (without animation) to the equivalent real
-        // index — looks identical, restores room to keep swiping.
+        // Triple-buffer: [last, ...real, first]. After a swipe lands on a
+        // duplicate edge, snap (without animation) to the equivalent real
+        // index — looks identical, lets the user keep swiping.
         let pages = [dashboards.last!] + dashboards + [dashboards.first!]
-        return TabView(selection: $pageIndex) {
-            ForEach(pages.indices, id: \.self) { idx in
-                DashboardDetailView(dashboardId: pages[idx].id)
-                    .tag(idx)
-                    .onAppear {
-                        // Pin whichever dashboard is currently visible so
-                        // widgets + future cold-launches remember it.
-                        let realIdx = realIndex(forPage: idx)
-                        if realIdx >= 0, realIdx < dashboards.count {
-                            pinIfNeeded(dashboards[realIdx].id)
-                        }
-                    }
-            }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .always))
-        .indexViewStyle(.page(backgroundDisplayMode: .always))
-        .onChange(of: pageIndex) { _, newIdx in
-            handleEdgeWrap(newIdx)
-        }
-    }
-
-    /// `pageIndex` lives in the extended index space (0...N+1). The user
-    /// only ever lands on 0 or N+1 momentarily — we snap them back to the
-    /// equivalent real index without animation.
-    private func handleEdgeWrap(_ newIdx: Int) {
         let n = dashboards.count
-        guard n > 1 else { return }
-        if newIdx == 0 {
-            snapWithoutAnimation(to: n)        // last real
-        } else if newIdx == n + 1 {
-            snapWithoutAnimation(to: 1)        // first real
+        return ZStack(alignment: .bottom) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 0) {
+                    ForEach(pages.indices, id: \.self) { idx in
+                        DashboardDetailView(dashboardId: pages[idx].id)
+                            .containerRelativeFrame(.horizontal)
+                            .id(idx)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollTargetBehavior(.paging)
+            .scrollPosition(id: $scrolledPage, anchor: .center)
+            .onChange(of: scrolledPage) { _, newIdx in
+                guard let newIdx else { return }
+                pageIndex = newIdx
+
+                if n > 1, newIdx == 0 {
+                    snapScroll(to: n)
+                } else if n > 1, newIdx == n + 1 {
+                    snapScroll(to: 1)
+                }
+
+                let realIdx = realIndex(forPage: newIdx)
+                if realIdx >= 0, realIdx < dashboards.count {
+                    pinIfNeeded(dashboards[realIdx].id)
+                }
+            }
+            .onAppear { scrolledPage = pageIndex }
+            .onChange(of: pageIndex) { _, newIdx in
+                // External page changes (e.g. deep links) sync into the
+                // scroll position; no animation so it lands instantly.
+                if scrolledPage != newIdx {
+                    var t = Transaction(); t.disablesAnimations = true
+                    withTransaction(t) { scrolledPage = newIdx }
+                }
+            }
+
+            pageIndicator(count: n, page: realIndex(forPage: pageIndex))
+                .padding(.bottom, 6)
         }
     }
 
-    private func snapWithoutAnimation(to index: Int) {
+    /// Move the ScrollView's position without animating it — used for the
+    /// edge-wrap snap. Wrapped in DispatchQueue.main.async so the snap
+    /// happens after the user's swipe transition has fully landed; doing
+    /// it synchronously inside the onChange block fights the in-flight
+    /// scroll-target animation and leaves the carousel in a half-state.
+    private func snapScroll(to index: Int) {
         DispatchQueue.main.async {
             var t = Transaction()
             t.disablesAnimations = true
             withTransaction(t) {
-                pageIndex = index
+                scrolledPage = index
             }
         }
+    }
+
+    /// Compact iOS-style page-indicator dots. Drawn on top of the carousel
+    /// at the bottom; the carousel content has enough room above them since
+    /// the dashboard's "Last refreshed" footer keeps a small bottom inset.
+    private func pageIndicator(count: Int, page: Int) -> some View {
+        HStack(spacing: 6) {
+            ForEach(0..<count, id: \.self) { i in
+                Circle()
+                    .fill(i == page ? Color.primary.opacity(0.85) : Color.secondary.opacity(0.35))
+                    .frame(width: 6, height: 6)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.thinMaterial, in: Capsule())
+        .allowsHitTesting(false)
     }
 
     /// Map an extended-space page index to the underlying dashboard index.
