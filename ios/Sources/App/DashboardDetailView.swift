@@ -7,15 +7,24 @@ struct DashboardDetailView: View {
     @State private var isLoading = false
     @State private var errorText: String?
     @State private var selectedInvestigation: SelectedInvestigation?
+    @State private var editMode: Bool = false
+    @StateObject private var layoutModel: BentoLayoutModel
+
+    init(dashboardId: String) {
+        self.dashboardId = dashboardId
+        _layoutModel = StateObject(wrappedValue: BentoLayoutModel(dashboardId: dashboardId))
+    }
 
     var body: some View {
-        ScrollView {
+        Group {
             if let snapshot {
                 contentView(snapshot)
             } else if isLoading {
                 ProgressView().padding()
             } else if let errorText {
                 Text(errorText).foregroundStyle(.red).padding()
+            } else {
+                Color.clear
             }
         }
         .background((snapshot.flatMap { Color(hex: $0.theme?.colors.background ?? "#000000") }) ?? .black)
@@ -25,7 +34,38 @@ struct DashboardDetailView: View {
         .refreshable { await reload() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { Task { await reload() } } label: { Image(systemName: "arrow.clockwise") }
+                if editMode {
+                    Button("Done") {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                            editMode = false
+                        }
+                    }
+                    .fontWeight(.semibold)
+                } else {
+                    Menu {
+                        Button {
+                            Task { await reload() }
+                        } label: {
+                            Label("Refresh", systemImage: "arrow.clockwise")
+                        }
+                        Button {
+                            withAnimation { editMode = true }
+                        } label: {
+                            Label("Edit Layout", systemImage: "rectangle.3.group")
+                        }
+                        if layoutModel.customized {
+                            Button(role: .destructive) {
+                                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                                    layoutModel.reset()
+                                }
+                            } label: {
+                                Label("Reset Layout", systemImage: "arrow.counterclockwise")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
             }
         }
         .navigationDestination(item: $selectedInvestigation) { selection in
@@ -40,68 +80,65 @@ struct DashboardDetailView: View {
     @ViewBuilder
     private func contentView(_ snapshot: SnapshotResponse) -> some View {
         let theme = snapshot.theme ?? .fallback
-        LazyVGrid(
-            columns: [GridItem(.flexible()), GridItem(.flexible())],
-            spacing: 12
-        ) {
-            ForEach(snapshot.widgets) { widget in
-                widgetCardButton(widget: widget, theme: theme)
-            }
-        }
-        .padding(16)
-
-        // Anomaly-aware banner. Tap to open the Managed Agents investigation.
-        ForEach(snapshot.widgets.filter { $0.anomaly }) { w in
-            if let explanation = w.anomalyExplanation {
-                Button {
-                    if let invId = w.investigationId {
+        VStack(spacing: 0) {
+            BentoGridView(
+                widgets: snapshot.widgets,
+                theme: theme,
+                editMode: $editMode,
+                model: layoutModel,
+                onAnomalyTap: { widget in
+                    if let invId = widget.investigationId {
                         selectedInvestigation = SelectedInvestigation(
                             investigationId: invId,
-                            widgetTitle: w.title,
+                            widgetTitle: widget.title,
                             theme: theme
                         )
                     }
-                } label: {
-                    AnomalyBanner(
-                        title: w.title,
-                        explanation: explanation,
-                        investigationStatus: w.investigationStatus,
-                        hasInvestigation: w.investigationId != nil,
-                        theme: theme
-                    )
                 }
-                .buttonStyle(.plain)
-                .disabled(w.investigationId == nil)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-            }
-        }
+            )
+            .frame(maxHeight: .infinity)
 
-        if let ts = snapshot.widgets.compactMap(\.ts).max() {
-            Text("Last refreshed \(ts)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .padding(.bottom, 16)
+            if !editMode {
+                anomalyAndFooter(snapshot: snapshot, theme: theme)
+            }
         }
     }
 
     @ViewBuilder
-    private func widgetCardButton(widget: SnapshotWidget, theme: Theme) -> some View {
-        if widget.anomaly, let invId = widget.investigationId {
-            Button {
-                selectedInvestigation = SelectedInvestigation(
-                    investigationId: invId,
-                    widgetTitle: widget.title,
-                    theme: theme
-                )
-            } label: {
-                WidgetCardView(widget: widget, theme: theme)
-                    .frame(minHeight: 140)
+    private func anomalyAndFooter(snapshot: SnapshotResponse, theme: Theme) -> some View {
+        VStack(spacing: 0) {
+            ForEach(snapshot.widgets.filter { $0.anomaly }) { w in
+                if let explanation = w.anomalyExplanation {
+                    Button {
+                        if let invId = w.investigationId {
+                            selectedInvestigation = SelectedInvestigation(
+                                investigationId: invId,
+                                widgetTitle: w.title,
+                                theme: theme
+                            )
+                        }
+                    } label: {
+                        AnomalyBanner(
+                            title: w.title,
+                            explanation: explanation,
+                            investigationStatus: w.investigationStatus,
+                            hasInvestigation: w.investigationId != nil,
+                            theme: theme
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(w.investigationId == nil)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                }
             }
-            .buttonStyle(.plain)
-        } else {
-            WidgetCardView(widget: widget, theme: theme)
-                .frame(minHeight: 140)
+
+            if let ts = snapshot.widgets.compactMap(\.ts).max() {
+                Text("Last refreshed \(ts)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 12)
+            }
         }
     }
 

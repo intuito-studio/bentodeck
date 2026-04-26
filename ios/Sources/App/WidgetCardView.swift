@@ -1,23 +1,36 @@
 import SwiftUI
 
+/// Display size class for the in-app dashboard card. Derived from `LayoutSize`
+/// — small cells render `.compact`, anything bigger renders `.hero` so the
+/// extra real estate isn't wasted.
+enum WidgetDisplaySize {
+    case compact
+    case hero
+
+    init(_ size: LayoutSize) {
+        self = size == .small ? .compact : .hero
+    }
+}
+
 /// Renders a single widget card in the app's dashboard detail view.
 /// Kept visually close to what the Home Screen / Lock Screen widgets
 /// display so the in-app view feels like a larger version of the same thing.
 struct WidgetCardView: View {
     let widget: SnapshotWidget
     let theme: Theme
+    var displaySize: WidgetDisplaySize = .compact
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: spacing) {
             HStack {
                 Text(widget.title.uppercased())
-                    .font(theme.secondaryFont(size: 11))
+                    .font(theme.secondaryFont(size: titleFontSize))
                     .foregroundStyle(Color(hex: theme.colors.secondary))
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 if widget.anomaly {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .font(displaySize == .hero ? .title3 : .caption)
                         .foregroundStyle(Color(hex: theme.colors.negative))
                 }
             }
@@ -26,8 +39,8 @@ struct WidgetCardView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(displaySize == .hero ? 20 : 14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(hex: theme.colors.surface))
@@ -56,19 +69,19 @@ struct WidgetCardView: View {
 
     private var numberBody: some View {
         Text(widget.value?.displayString ?? "—")
-            .font(theme.primaryFont(size: 34))
+            .font(theme.primaryFont(size: numberFontSize))
             .foregroundStyle(Color(hex: theme.colors.primary))
-            .minimumScaleFactor(0.5)
+            .minimumScaleFactor(0.4)
             .lineLimit(1)
     }
 
     private var numberWithTrendBody: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(widget.value?.displayString ?? "—")
-                    .font(theme.primaryFont(size: 30))
+                    .font(theme.primaryFont(size: numberWithTrendFontSize))
                     .foregroundStyle(Color(hex: theme.colors.primary))
-                    .minimumScaleFactor(0.5)
+                    .minimumScaleFactor(0.4)
                     .lineLimit(1)
                 TrendBadge(
                     history: widget.history ?? [],
@@ -84,17 +97,17 @@ struct WidgetCardView: View {
                     fillStart: Color(hex: theme.chart.fillStart),
                     fillEnd: Color(hex: theme.chart.fillEnd)
                 )
-                .frame(height: 22)
+                .frame(height: sparklineTrendHeight)
             }
         }
     }
 
     private var sparklineBody: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(widget.value?.displayString ?? "—")
-                .font(theme.primaryFont(size: 24))
+                .font(theme.primaryFont(size: sparklineNumberFontSize))
                 .foregroundStyle(Color(hex: theme.colors.primary))
-                .minimumScaleFactor(0.5)
+                .minimumScaleFactor(0.4)
                 .lineLimit(1)
             if let history = widget.history, history.count >= 2 {
                 Sparkline(
@@ -103,7 +116,7 @@ struct WidgetCardView: View {
                     fillStart: Color(hex: theme.chart.fillStart),
                     fillEnd: Color(hex: theme.chart.fillEnd)
                 )
-                .frame(height: 38)
+                .frame(height: sparklineHeight)
             } else {
                 Text("Collecting data…")
                     .font(theme.secondaryFont(size: 11))
@@ -113,11 +126,11 @@ struct WidgetCardView: View {
     }
 
     private var listBody: some View {
-        let items = arrayValue(widget.value).prefix(3)
-        return VStack(alignment: .leading, spacing: 4) {
+        let items = arrayValue(widget.value).prefix(maxListItems)
+        return VStack(alignment: .leading, spacing: displaySize == .hero ? 8 : 4) {
             ForEach(Array(items.enumerated()), id: \.offset) { _, value in
                 Text(stringifyListItem(value))
-                    .font(theme.primaryFont(size: 14))
+                    .font(theme.primaryFont(size: listFontSize))
                     .foregroundStyle(Color(hex: theme.colors.primary))
                     .lineLimit(1)
             }
@@ -131,15 +144,29 @@ struct WidgetCardView: View {
     private var statusBody: some View {
         let raw = widget.value?.raw
         let (label, color) = statusInfo(raw)
-        return HStack(spacing: 10) {
+        return HStack(spacing: displaySize == .hero ? 16 : 10) {
             Circle()
                 .fill(color)
-                .frame(width: 14, height: 14)
+                .frame(width: statusDotSize, height: statusDotSize)
             Text(label)
-                .font(theme.primaryFont(size: 20))
+                .font(theme.primaryFont(size: statusFontSize))
                 .foregroundStyle(Color(hex: theme.colors.primary))
         }
     }
+
+    // MARK: - Size-driven dimensions
+
+    private var spacing: CGFloat { displaySize == .hero ? 12 : 8 }
+    private var titleFontSize: CGFloat { 11 }
+    private var numberFontSize: CGFloat { displaySize == .hero ? 64 : 34 }
+    private var numberWithTrendFontSize: CGFloat { displaySize == .hero ? 56 : 30 }
+    private var sparklineNumberFontSize: CGFloat { displaySize == .hero ? 44 : 24 }
+    private var sparklineHeight: CGFloat { displaySize == .hero ? 80 : 38 }
+    private var sparklineTrendHeight: CGFloat { displaySize == .hero ? 56 : 22 }
+    private var listFontSize: CGFloat { displaySize == .hero ? 18 : 14 }
+    private var maxListItems: Int { displaySize == .hero ? 8 : 3 }
+    private var statusDotSize: CGFloat { displaySize == .hero ? 24 : 14 }
+    private var statusFontSize: CGFloat { displaySize == .hero ? 36 : 20 }
 
     private func arrayValue(_ sv: SnapshotValue?) -> [JSONValue] {
         if case let .array(items) = sv?.raw { return items }

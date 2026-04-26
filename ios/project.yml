@@ -92,6 +92,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.intuitostudio.bentodeck.tests
+        GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/BentoDeck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BentoDeck"
         BUNDLE_LOADER: "$(TEST_HOST)"
 
