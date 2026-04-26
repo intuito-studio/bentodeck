@@ -14,7 +14,10 @@ struct HomeWidget: Widget {
         }
         .configurationDisplayName("BentoDeck")
         .description("Live dashboards from Claude, on your Home Screen.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        // Small = 1 hero number; medium = 4-tile 2×2; large = 6-tile 2×3;
+        // extra-large (iPad) = 8-tile 4×2. Adding the bigger families lets
+        // users put more of the dashboard on the home screen at once.
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
     }
 
     private func deepLink(for entry: BentoEntry) -> URL? {
@@ -37,9 +40,13 @@ struct HomeWidgetView: View {
         switch family {
         case .systemSmall: smallView
         case .systemMedium: mediumView
+        case .systemLarge: largeView
+        case .systemExtraLarge: extraLargeView
         default: smallView
         }
     }
+
+    // MARK: - Small (1 hero metric)
 
     private var smallView: some View {
         let widget = entry.snapshot?.widgets.first
@@ -94,22 +101,60 @@ struct HomeWidgetView: View {
         }
     }
 
+    // MARK: - Medium (4 tiles, 2×2)
+
     private var mediumView: some View {
-        let widgets = (entry.snapshot?.widgets ?? []).prefix(4)
-        return Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-            GridRow {
-                tile(widgets.indices.contains(0) ? Array(widgets)[0] : nil)
-                tile(widgets.indices.contains(1) ? Array(widgets)[1] : nil)
-            }
-            GridRow {
-                tile(widgets.indices.contains(2) ? Array(widgets)[2] : nil)
-                tile(widgets.indices.contains(3) ? Array(widgets)[3] : nil)
+        gridOfTiles(maxCount: 4, columns: 2, fontScale: .medium)
+    }
+
+    // MARK: - Large (6 tiles, 2×3)
+
+    private var largeView: some View {
+        gridOfTiles(maxCount: 6, columns: 2, fontScale: .large)
+    }
+
+    // MARK: - Extra-large (8 tiles, 4×2 — iPad only)
+
+    private var extraLargeView: some View {
+        gridOfTiles(maxCount: 8, columns: 4, fontScale: .medium)
+    }
+
+    // MARK: - Grid + tile rendering
+
+    private enum TileFontScale {
+        case medium
+        case large
+
+        var titleSize: CGFloat { self == .large ? 11 : 9 }
+        var valueSize: CGFloat { self == .large ? 28 : 22 }
+        var valueWithSparklineSize: CGFloat { self == .large ? 22 : 18 }
+        var trendSize: CGFloat { self == .large ? 10 : 8 }
+        var sparklineHeight: CGFloat { self == .large ? 24 : 16 }
+        var sparklineLineWidth: CGFloat { self == .large ? 1.5 : 1.2 }
+        var corner: CGFloat { self == .large ? 14 : 10 }
+        var hPad: CGFloat { self == .large ? 12 : 8 }
+        var vPad: CGFloat { self == .large ? 10 : 6 }
+        var anomalyIconSize: CGFloat { self == .large ? 11 : 9 }
+    }
+
+    @ViewBuilder
+    private func gridOfTiles(maxCount: Int, columns: Int, fontScale: TileFontScale) -> some View {
+        let widgets = Array((entry.snapshot?.widgets ?? []).prefix(maxCount))
+        let rows = Int(ceil(Double(maxCount) / Double(columns)))
+        Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+            ForEach(0..<rows, id: \.self) { r in
+                GridRow {
+                    ForEach(0..<columns, id: \.self) { c in
+                        let i = r * columns + c
+                        tile(i < widgets.count ? widgets[i] : nil, fontScale: fontScale)
+                    }
+                }
             }
         }
     }
 
     @ViewBuilder
-    private func tile(_ widget: SnapshotWidget?) -> some View {
+    private func tile(_ widget: SnapshotWidget?, fontScale: TileFontScale) -> some View {
         let history = widget?.history ?? []
         let showSparkline =
             history.count >= 2
@@ -117,18 +162,20 @@ struct HomeWidgetView: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Text(widget?.title.uppercased() ?? "—")
-                    .font(entry.theme.secondaryFont(size: 9))
+                    .font(entry.theme.secondaryFont(size: fontScale.titleSize))
                     .foregroundStyle(Color(hex: entry.theme.colors.secondary))
                     .lineLimit(1)
                 if widget?.anomaly == true {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 9))
+                        .font(.system(size: fontScale.anomalyIconSize))
                         .foregroundStyle(Color(hex: entry.theme.colors.negative))
                 }
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(widget?.value?.displayString ?? "—")
-                    .font(entry.theme.primaryFont(size: showSparkline ? 18 : 22))
+                    .font(entry.theme.primaryFont(
+                        size: showSparkline ? fontScale.valueWithSparklineSize : fontScale.valueSize
+                    ))
                     .foregroundStyle(Color(hex: entry.theme.colors.primary))
                     .minimumScaleFactor(0.4)
                     .lineLimit(1)
@@ -137,7 +184,7 @@ struct HomeWidgetView: View {
                     positive: Color(hex: entry.theme.colors.positive),
                     negative: Color(hex: entry.theme.colors.negative),
                     neutral: Color(hex: entry.theme.colors.secondary),
-                    font: .system(size: 8, weight: .semibold)
+                    font: .system(size: fontScale.trendSize, weight: .semibold)
                 )
             }
             if showSparkline {
@@ -146,19 +193,19 @@ struct HomeWidgetView: View {
                     stroke: Color(hex: entry.theme.chart.stroke),
                     fillStart: Color(hex: entry.theme.chart.fillStart),
                     fillEnd: Color(hex: entry.theme.chart.fillEnd),
-                    lineWidth: 1.2
+                    lineWidth: fontScale.sparklineLineWidth
                 )
-                .frame(height: 16)
+                .frame(height: fontScale.sparklineHeight)
             }
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
+        .padding(.vertical, fontScale.vPad)
+        .padding(.horizontal, fontScale.hPad)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: fontScale.corner, style: .continuous)
                 .fill(Color(hex: entry.theme.colors.surface))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: fontScale.corner, style: .continuous)
                         .stroke(Color(hex: entry.theme.colors.border), lineWidth: 0.5)
                 )
         )
