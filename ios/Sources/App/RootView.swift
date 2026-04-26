@@ -54,6 +54,26 @@ struct RootView: View {
             }
         }
         .task { await reload() }
+        // Handle bentodeck:// deep links from widgets and Live Activities.
+        .onOpenURL { url in
+            handleDeepLink(url)
+        }
+    }
+
+    private func handleDeepLink(_ url: URL) {
+        guard let destination = BentoDeckLink.parse(url) else { return }
+        switch destination {
+        case let .dashboard(id):
+            selectedDashboardId = id
+        case let .investigation(_, _):
+            // Investigation links are handled by DashboardDetailView's own
+            // navigation destination once we land on a dashboard. For now
+            // we just open the app at the most recently pinned dashboard;
+            // the user is one tap away from the report.
+            if let pinned = SharedStore.shared.pinnedDashboardId {
+                selectedDashboardId = pinned
+            }
+        }
     }
 
     private func reload() async {

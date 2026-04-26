@@ -19,3 +19,63 @@ enum Config {
         return URL(string: "http://localhost:3737")!
     }()
 }
+
+/// URL scheme used by widgets and Live Activities to deep-link into the
+/// app. The host names the destination, query parameters carry the IDs.
+///
+/// Examples:
+///   bentodeck://dashboard?id=<dashboardId>
+///   bentodeck://investigation?id=<investigationId>&widgetTitle=<title>
+enum BentoDeckLink {
+    static let scheme = "bentodeck"
+
+    static func dashboard(id: String) -> URL {
+        var c = URLComponents()
+        c.scheme = scheme
+        c.host = "dashboard"
+        c.queryItems = [URLQueryItem(name: "id", value: id)]
+        return c.url!
+    }
+
+    static func investigation(id: String, widgetTitle: String) -> URL {
+        var c = URLComponents()
+        c.scheme = scheme
+        c.host = "investigation"
+        c.queryItems = [
+            URLQueryItem(name: "id", value: id),
+            URLQueryItem(name: "widgetTitle", value: widgetTitle),
+        ]
+        return c.url!
+    }
+
+    /// Parse an incoming deep link into a typed destination. Returns nil
+    /// for malformed URLs or unknown hosts.
+    static func parse(_ url: URL) -> Destination? {
+        guard url.scheme == scheme else { return nil }
+        let queryItems =
+            URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems ?? []
+        let dict = Dictionary(
+            uniqueKeysWithValues: queryItems.compactMap { item -> (String, String)? in
+                guard let v = item.value else { return nil }
+                return (item.name, v)
+            }
+        )
+
+        switch url.host {
+        case "dashboard":
+            guard let id = dict["id"] else { return nil }
+            return .dashboard(id: id)
+        case "investigation":
+            guard let id = dict["id"] else { return nil }
+            return .investigation(id: id, widgetTitle: dict["widgetTitle"] ?? "Widget")
+        default:
+            return nil
+        }
+    }
+
+    enum Destination: Hashable {
+        case dashboard(id: String)
+        case investigation(id: String, widgetTitle: String)
+    }
+}

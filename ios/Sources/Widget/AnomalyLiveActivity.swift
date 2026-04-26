@@ -21,6 +21,7 @@ struct AnomalyLiveActivity: Widget {
             .activitySystemActionForegroundColor(
                 Color(hex: context.attributes.themePrimaryHex)
             )
+            .widgetURL(liveActivityDeepLink(state: context.state, attributes: context.attributes))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -62,6 +63,22 @@ struct AnomalyLiveActivity: Widget {
             }
         }
     }
+}
+
+/// Deep link a Live Activity tap should resolve to. If the investigation
+/// is far enough along to be worth reading we land directly on it; otherwise
+/// we just open the app, which shows the most recent dashboard with the
+/// anomaly banner already visible.
+private func liveActivityDeepLink(
+    state: AnomalyAttributes.ContentState,
+    attributes: AnomalyAttributes
+) -> URL? {
+    // If we ever decide to thread an investigation id into ContentState,
+    // we'd return BentoDeckLink.investigation(...) here. For now ContentState
+    // doesn't carry the id (we keep it small to stay under the activity
+    // payload budget); falling back to opening the app is fine because the
+    // anomaly banner becomes a tap target inside the dashboard view.
+    return URL(string: "bentodeck://app")
 }
 
 private struct LockScreenContent: View {

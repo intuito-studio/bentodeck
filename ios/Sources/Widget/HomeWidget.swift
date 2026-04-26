@@ -10,10 +10,22 @@ struct HomeWidget: Widget {
                 .containerBackground(for: .widget) {
                     Color(hex: entry.theme.colors.background)
                 }
+                .widgetURL(deepLink(for: entry))
         }
         .configurationDisplayName("BentoDeck")
         .description("Live dashboards from Claude, on your Home Screen.")
         .supportedFamilies([.systemSmall, .systemMedium])
+    }
+
+    private func deepLink(for entry: BentoEntry) -> URL? {
+        // Tapping the widget always lands on the dashboard the widget
+        // is mirroring. If there's an anomaly with an investigation,
+        // a tap on the right tile would ideally land on that report —
+        // WidgetKit only supports a single widgetURL per family, so
+        // we keep it simple and route to the dashboard view, which
+        // shows the anomaly banner that's already a tap target.
+        guard let id = entry.snapshot?.dashboardId else { return nil }
+        return BentoDeckLink.dashboard(id: id)
     }
 }
 
