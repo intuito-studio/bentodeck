@@ -10,7 +10,6 @@ struct DashboardDetailView: View {
     @State private var selectedInvestigation: SelectedInvestigation?
     @State private var editMode: Bool = false
     @State private var background: DashboardBackground = .theme
-    @State private var backgroundImage: UIImage?
     @State private var photoPickerItem: PhotosPickerItem?
     @StateObject private var layoutModel: BentoLayoutModel
 
@@ -31,7 +30,11 @@ struct DashboardDetailView: View {
                 Color.clear
             }
         }
-        .background(backgroundLayer)
+        // Background is owned by RootView (SharedBackgroundView renders one
+        // photo for the currently-visible dashboard and cross-fades on swipe).
+        // Each carousel page is therefore transparent so the shared layer
+        // shows through.
+        .background(Color.clear)
         // Title is owned by RootView (the carousel knows which page is
         // active and binds it to the navigation title).
         .task(id: dashboardId) {
@@ -125,25 +128,6 @@ struct DashboardDetailView: View {
     }
 
     @ViewBuilder
-    private var backgroundLayer: some View {
-        let themeColor = (snapshot.flatMap { Color(hex: $0.theme?.colors.background ?? "#000000") }) ?? .black
-        ZStack {
-            themeColor
-            if background == .image, let backgroundImage {
-                Image(uiImage: backgroundImage)
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                    .overlay(
-                        // Slight darkening so foreground text + glass cards
-                        // stay legible regardless of the photo's brightness.
-                        Color.black.opacity(0.25).ignoresSafeArea()
-                    )
-            }
-        }
-    }
-
-    @ViewBuilder
     private func contentView(_ snapshot: SnapshotResponse) -> some View {
         let theme = snapshot.theme ?? .fallback
         VStack(spacing: 0) {
@@ -212,20 +196,15 @@ struct DashboardDetailView: View {
     // MARK: - Background helpers
 
     private func loadBackground() {
+        // The image bytes are decoded once by SharedBackgroundView via the
+        // BackgroundImageCache; here we only need the kind so the cards
+        // know whether to render in glass mode.
         background = SharedStore.shared.loadBackground(dashboardId: dashboardId)
-        // Use the shared cache so swipes don't re-decode multi-MB JPEGs on
-        // every page render. The cache invalidates by file mtime.
-        backgroundImage = background == .image
-            ? BackgroundImageCache.shared.image(forDashboardId: dashboardId)
-            : nil
     }
 
     private func setBackground(_ kind: DashboardBackground) {
         background = kind
         SharedStore.shared.saveBackground(kind, dashboardId: dashboardId)
-        if kind == .theme {
-            backgroundImage = nil
-        }
         WidgetCenter.shared.reloadAllTimelines()
     }
 
@@ -243,7 +222,6 @@ struct DashboardDetailView: View {
         guard let jpeg = image.jpegData(compressionQuality: 0.85) else { return }
         SharedStore.shared.saveBackgroundImage(jpeg, dashboardId: dashboardId)
         BackgroundImageCache.shared.invalidate(dashboardId: dashboardId)
-        backgroundImage = image
         setBackground(.image)
     }
 

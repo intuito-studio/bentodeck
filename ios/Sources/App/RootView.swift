@@ -17,8 +17,11 @@ struct RootView: View {
                 } else if dashboards.isEmpty {
                     emptyState
                 } else if dashboards.count == 1 {
-                    DashboardDetailView(dashboardId: dashboards[0].id)
-                        .onAppear { pinIfNeeded(dashboards[0].id) }
+                    ZStack {
+                        SharedBackgroundView(dashboardId: dashboards[0].id)
+                        DashboardDetailView(dashboardId: dashboards[0].id)
+                            .onAppear { pinIfNeeded(dashboards[0].id) }
+                    }
                 } else {
                     carousel
                 }
@@ -50,46 +53,49 @@ struct RootView: View {
         // index — looks identical, lets the user keep swiping.
         let pages = [dashboards.last!] + dashboards + [dashboards.first!]
         let n = dashboards.count
-        return ZStack(alignment: .bottom) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 0) {
-                    ForEach(pages.indices, id: \.self) { idx in
-                        DashboardDetailView(dashboardId: pages[idx].id)
-                            .containerRelativeFrame(.horizontal)
-                            .id(idx)
+        return GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                SharedBackgroundView(dashboardId: currentVisibleDashboardId)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 0) {
+                        ForEach(pages.indices, id: \.self) { idx in
+                            DashboardDetailView(dashboardId: pages[idx].id)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .id(idx)
+                        }
+                    }
+                    .scrollTargetLayout()
+                }
+                .scrollTargetBehavior(.paging)
+                .scrollPosition(id: $scrolledPage, anchor: .center)
+                .onChange(of: scrolledPage) { _, newIdx in
+                    guard let newIdx else { return }
+                    pageIndex = newIdx
+
+                    if n > 1, newIdx == 0 {
+                        snapScroll(to: n)
+                    } else if n > 1, newIdx == n + 1 {
+                        snapScroll(to: 1)
+                    }
+
+                    let realIdx = realIndex(forPage: newIdx)
+                    if realIdx >= 0, realIdx < dashboards.count {
+                        pinIfNeeded(dashboards[realIdx].id)
                     }
                 }
-                .scrollTargetLayout()
-            }
-            .scrollTargetBehavior(.paging)
-            .scrollPosition(id: $scrolledPage, anchor: .center)
-            .onChange(of: scrolledPage) { _, newIdx in
-                guard let newIdx else { return }
-                pageIndex = newIdx
-
-                if n > 1, newIdx == 0 {
-                    snapScroll(to: n)
-                } else if n > 1, newIdx == n + 1 {
-                    snapScroll(to: 1)
+                .onAppear { scrolledPage = pageIndex }
+                .onChange(of: pageIndex) { _, newIdx in
+                    // External page changes (e.g. deep links) sync into the
+                    // scroll position; no animation so it lands instantly.
+                    if scrolledPage != newIdx {
+                        var t = Transaction(); t.disablesAnimations = true
+                        withTransaction(t) { scrolledPage = newIdx }
+                    }
                 }
 
-                let realIdx = realIndex(forPage: newIdx)
-                if realIdx >= 0, realIdx < dashboards.count {
-                    pinIfNeeded(dashboards[realIdx].id)
-                }
+                pageIndicator(count: n, page: realIndex(forPage: pageIndex))
+                    .padding(.bottom, 6)
             }
-            .onAppear { scrolledPage = pageIndex }
-            .onChange(of: pageIndex) { _, newIdx in
-                // External page changes (e.g. deep links) sync into the
-                // scroll position; no animation so it lands instantly.
-                if scrolledPage != newIdx {
-                    var t = Transaction(); t.disablesAnimations = true
-                    withTransaction(t) { scrolledPage = newIdx }
-                }
-            }
-
-            pageIndicator(count: n, page: realIndex(forPage: pageIndex))
-                .padding(.bottom, 6)
         }
     }
 
@@ -138,6 +144,12 @@ struct RootView: View {
         guard !dashboards.isEmpty else { return "BentoDeck" }
         if dashboards.count == 1 { return dashboards[0].name }
         return dashboards[realIndex(forPage: pageIndex)].name
+    }
+
+    private var currentVisibleDashboardId: String? {
+        guard !dashboards.isEmpty else { return nil }
+        if dashboards.count == 1 { return dashboards[0].id }
+        return dashboards[realIndex(forPage: pageIndex)].id
     }
 
     private func pinIfNeeded(_ id: String) {

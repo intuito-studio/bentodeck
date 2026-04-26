@@ -47,6 +47,7 @@
 		A6F50BA9302C1A0F77C29231 /* BentoDeckWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2078DF2D525B54FE32C99 /* BentoDeckWidgetBundle.swift */; };
 		A9BCF9B86478D4062FB14270 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82186DB409A9A0CB85E9AD23 /* LiveActivityManager.swift */; };
 		AA792F48836448B4651F0141 /* GlassSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6406555548F9259F6E496B /* GlassSurface.swift */; };
+		B9DD6D01B9A9C248C6032D91 /* SharedBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBA1CA64EB00B5F8FC3EB19 /* SharedBackgroundView.swift */; };
 		C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B989F6F04FE33D22987444 /* RefreshManager.swift */; };
 		C754DAB9E096A8609035B52C /* FocusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876AFAFB0EF140C67CC6D401 /* FocusView.swift */; };
 		E40CF7B52A18853611FDA9CA /* LockWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D5EC96F32468792ADF6AFE /* LockWidget.swift */; };
@@ -104,6 +105,7 @@
 		35205FBBB142EA7F70372017 /* InvestigationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestigationDetailView.swift; sourceTree = "<group>"; };
 		4A8167BBB57084E3CE6FD6DE /* FocusResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusResolverTests.swift; sourceTree = "<group>"; };
 		552192F29EE2BAC427C320E6 /* AnomalyLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnomalyLiveActivity.swift; sourceTree = "<group>"; };
+		5CBA1CA64EB00B5F8FC3EB19 /* SharedBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedBackgroundView.swift; sourceTree = "<group>"; };
 		641CB75ECB7AFF26A59DA791 /* BentoLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoLayoutTests.swift; sourceTree = "<group>"; };
 		646FD998400515644038D31D /* BentoDeckLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDeckLinkTests.swift; sourceTree = "<group>"; };
 		6652D4E97E4CA868E7281012 /* SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStore.swift; sourceTree = "<group>"; };
@@ -222,6 +224,7 @@
 				82186DB409A9A0CB85E9AD23 /* LiveActivityManager.swift */,
 				F4B989F6F04FE33D22987444 /* RefreshManager.swift */,
 				DE67445684544EBCF9DA9793 /* RootView.swift */,
+				5CBA1CA64EB00B5F8FC3EB19 /* SharedBackgroundView.swift */,
 				108C73115A730D83FBB2E827 /* WidgetCardView.swift */,
 			);
 			path = App;
@@ -388,6 +391,7 @@
 				A9BCF9B86478D4062FB14270 /* LiveActivityManager.swift in Sources */,
 				C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */,
 				94912C7D66C3FDAF07FFED5A /* RootView.swift in Sources */,
+				B9DD6D01B9A9C248C6032D91 /* SharedBackgroundView.swift in Sources */,
 				8C342234DAC6D520428D20BC /* SharedStore.swift in Sources */,
 				74371F857CDCE4671F667048 /* Sparkline.swift in Sources */,
 				FAB6D553CAA0468DCB9EC063 /* Theme.swift in Sources */,
