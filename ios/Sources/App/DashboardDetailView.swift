@@ -32,8 +32,8 @@ struct DashboardDetailView: View {
             }
         }
         .background(backgroundLayer)
-        .navigationTitle(snapshot?.name ?? "Dashboard")
-        .navigationBarTitleDisplayMode(.inline)
+        // Title is owned by RootView (the carousel knows which page is
+        // active and binds it to the navigation title).
         .task(id: dashboardId) {
             loadBackground()
             await reload()
