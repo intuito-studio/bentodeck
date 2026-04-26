@@ -98,6 +98,10 @@ struct HomeWidgetView: View {
 
     @ViewBuilder
     private func tile(_ widget: SnapshotWidget?) -> some View {
+        let history = widget?.history ?? []
+        let showSparkline =
+            history.count >= 2
+            && (widget?.type == .sparkline || widget?.type == .number_with_trend)
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Text(widget?.title.uppercased() ?? "—")
@@ -110,11 +114,30 @@ struct HomeWidgetView: View {
                         .foregroundStyle(Color(hex: entry.theme.colors.negative))
                 }
             }
-            Text(widget?.value?.displayString ?? "—")
-                .font(entry.theme.primaryFont(size: 22))
-                .foregroundStyle(Color(hex: entry.theme.colors.primary))
-                .minimumScaleFactor(0.4)
-                .lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(widget?.value?.displayString ?? "—")
+                    .font(entry.theme.primaryFont(size: showSparkline ? 18 : 22))
+                    .foregroundStyle(Color(hex: entry.theme.colors.primary))
+                    .minimumScaleFactor(0.4)
+                    .lineLimit(1)
+                TrendBadge(
+                    history: history,
+                    positive: Color(hex: entry.theme.colors.positive),
+                    negative: Color(hex: entry.theme.colors.negative),
+                    neutral: Color(hex: entry.theme.colors.secondary),
+                    font: .system(size: 8, weight: .semibold)
+                )
+            }
+            if showSparkline {
+                Sparkline(
+                    values: history,
+                    stroke: Color(hex: entry.theme.chart.stroke),
+                    fillStart: Color(hex: entry.theme.chart.fillStart),
+                    fillEnd: Color(hex: entry.theme.chart.fillEnd),
+                    lineWidth: 1.2
+                )
+                .frame(height: 16)
+            }
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 8)
