@@ -65,38 +65,43 @@ Six months earlier, the models weren't this good. Six months later, someone else
 
 ## Unique Selling Proposition
 
-Only BentoDeck has all four at once:
+Only BentoDeck has all five at once:
 
 1. **Conversation-configured, not form-configured.** You tell Claude Desktop what you want to see. Our MCP server receives the spec. Within seconds, the widget is on your phone. No forms, no field mappers, no drag-drop canvas. When you want to change it, you talk to Claude again. This is the interface without a name that "Build For What's Next" is pointing at.
 
-2. **AI at runtime, not just at setup.** Opus 4.7 generates the data transforms from sample API responses, suggests which widgets are useful, detects anomalies, and explains what happened in plain English when you tap. Every dashboard cell is capable of becoming a conversation.
+2. **Tier-2 endpoint discovery from natural language.** "Monitor my Linear backlog" — Opus 4.7 reads Linear's docs, picks the right REST endpoint, generates the auth header (using a `{{API_KEY}}` placeholder so the secret never reaches the model), verifies the call before persisting. No hand-maintained connector catalog. Every public API with documentation is a first-class citizen on day one.
 
-3. **Native Apple ambient surfaces, first-class.** iPhone Home Screen widgets and Lock Screen are v1. Apple Watch complications and Live Activities are v2. We are not a PWA. We are not a browser tab. We live on the surfaces users actually glance at.
+3. **Two-tier AI: fast wrist buzz + deep investigation.** A fast Messages-API anomaly call gates on a local z-score and a daily cap to keep cost bounded; the result is the Lock Screen / Live Activity sentence. *In parallel,* a long-running **Claude Managed Agents** session investigates with the full agent toolset (web_search, bash, file ops) and writes a multi-paragraph runbook the user reads when they tap. This is the "decoupling brain from hands" pattern, applied to ops monitoring.
 
-4. **Expressive, AI-themeable UI.** The entire live-data dashboard category has settled on sterile spreadsheet aesthetics — Numerics caps out at a five-option tint picker; Plecto offers a HEX field gated to enterprise customers; Power BI and Grafana IRM give you dark mode and nothing else. Meanwhile Widgetsmith and Widgy went viral on iOS specifically because people want Home Screen surfaces that feel like theirs. BentoDeck brings that energy to live data: 4–6 preset themes at launch, plus a one-prompt AI theme — *"Claude, make it cyberpunk terminal"* → the whole dashboard re-skins in seconds. No prior dashboard product has shipped AI-generated theming for live-data widgets. This is both a demo moment judges remember and a screenshot worth sharing.
+4. **Three Apple ambient surfaces, theme-driven end to end.** iPhone Home Screen widgets (small + medium with sparklines and trend badges), Lock Screen widgets (circular + rectangular + inline), and Live Activities (Lock Screen banner + Dynamic Island compact / minimal / expanded). One AI-generated theme cascades through every surface. We are not a PWA. We are not a browser tab. We live on the surfaces users actually glance at.
+
+5. **AI-themeable UI.** The entire live-data dashboard category has settled on sterile spreadsheet aesthetics — Numerics caps out at a five-option tint picker; Plecto offers a HEX field gated to enterprise customers; Power BI and Grafana IRM give you dark mode and nothing else. Widgetsmith and Widgy went viral on iOS specifically because people want Home Screen surfaces that feel like theirs. BentoDeck brings that energy to live data: 6 preset themes plus a one-prompt AI theme — *"Claude, make it cyberpunk terminal"* → the whole dashboard re-skins in seconds.
 
 The durable framing: **"Claude Desktop's output layer for Apple devices — expressive, conversational, and alive."**
 
-## Scope for v1 (hackathon cut)
+## Scope for v1 (shipped)
 
-**In:**
-- TypeScript/Node backend with MCP server exposing dashboard CRUD tools.
-- REST polling adapter with API-key auth (first source: Stripe test mode).
-- Opus 4.7-generated JMESPath transforms from sample API responses.
-- Native iOS app (SwiftUI) with a list of dashboards and widget detail views.
-- Home Screen widget (small + medium) and Lock Screen widget via WidgetKit.
-- Background App Refresh to update widget timelines.
-- Local Notifications triggered when Opus 4.7 detects anomalies (no paid APNs needed).
-- Theme system: 4–6 preset themes + one Opus 4.7-generated theme endpoint (colors + font + chart style as JSON; no per-widget styling, no image uploads, no custom fonts).
-- Claude Desktop demo: user prompts Claude → MCP call → widget appears on phone in seconds.
+**Backend (TypeScript / Node):**
+- 14 MCP tools for the conversational config flow.
+- REST polling scheduler with cost-bounded AI gating (statistical pre-filter + 20/widget/day cap + value-unchanged short-circuit + anomaly state carry-forward).
+- Tier-2 docs-driven endpoint discoverer (`discover_data_source`).
+- Opus 4.7 JMESPath transform inference, widget-type picker, anomaly explanation, theme generator.
+- **Claude Managed Agents** incident investigator that writes a multi-paragraph runbook in a sandboxed managed container, streamed back and persisted incrementally.
+- Production-shaped split: long-running backend (`npm start`) is independent of the MCP thin-client process (`npm run mcp`) Claude Desktop spawns.
+
+**iOS (SwiftUI + WidgetKit):**
+- Dashboard list + detail views, theme-driven across the entire surface.
+- **6 widget types rendered:** number, number_with_trend (with sparkline + trend badge), gauge (number fallback), sparkline (with chart fill), list, status.
+- **3 ambient surfaces:** Home Screen widgets (small + medium), Lock Screen widgets, **Live Activities** (Lock Screen banner + Dynamic Island).
+- Tap-to-investigate: anomaly banner / widget tap → InvestigationDetailView that polls and renders the Managed Agents report incrementally as it streams in.
+- Background App Refresh + Local Notifications (no APNs — works on free personal team signing).
 
 **Deferred (post-hackathon):**
-- Apple Watch complications (requires paid Developer account + more time than we have).
+- Apple Watch complications (requires paid Developer account).
 - WebSocket/SSE real-time sources.
-- Live Activities.
 - Drag-and-drop canvas, template marketplace.
 - Android / Wear OS.
-- Action widgets (v1 is read-only monitoring only).
+- Action widgets (v1 is read-only).
 
 ## Hackathon Context
 
