@@ -19,7 +19,7 @@ Two-tier AI: a fast Messages-API anomaly call for the wrist buzz; a long-running
 ## Links
 
 - **GitHub repo:** https://github.com/intuito-studio/bentodeck
-- **Demo video:** https://<TBD> (3-minute, Loom or YouTube)
+- **Demo video:** https://youtu.be/roASE-cP21E (3-minute, YouTube)
 - **Live domain (informational):** https://bentodeck.io
 
 ## Team
