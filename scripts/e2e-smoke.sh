@@ -315,6 +315,71 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Step 11: Investigation flow — seed a fake report, verify it streams to done
+# ---------------------------------------------------------------------------
+section "Step 11/13: POST /demo/control/seed-investigation"
+ERRORS_WIDGET_ID="$(echo "$SNAP2_JSON" | jq -r '.widgets[] | select(.title=="Critical errors (15m)") | .id')"
+SEED_JSON="$(curl -sS -X POST -H 'Content-Type: application/json' -d "{\"widgetId\":\"$ERRORS_WIDGET_ID\"}" "$BASE_URL/demo/control/seed-investigation")"
+SEED_OK="$(echo "$SEED_JSON" | jq -r '.ok // false')"
+INVESTIGATION_ID="$(echo "$SEED_JSON" | jq -r '.investigationId // ""')"
+
+if [ "$SEED_OK" = "true" ] && [ -n "$INVESTIGATION_ID" ]; then
+  pass "seed-investigation returned an id ($INVESTIGATION_ID)"
+else
+  info "Response: $SEED_JSON"
+  die "seed-investigation did not return ok+id"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 12: Wait for the seeded investigation to stream to status=done
+# (seeder uses 1.5s + 3.5s setTimeouts)
+# ---------------------------------------------------------------------------
+section "Step 12/13: Waiting up to 6s for investigation to complete"
+INVESTIGATION_DONE=0
+for i in $(seq 1 12); do
+  sleep 0.5
+  STATUS="$(curl -sS "$BASE_URL/investigations/$INVESTIGATION_ID" | jq -r '.investigation.status // ""')"
+  if [ "$STATUS" = "done" ]; then
+    INVESTIGATION_DONE=1
+    info "Investigation completed after ~$((i * 500)) ms"
+    break
+  fi
+done
+if [ "$INVESTIGATION_DONE" -eq 1 ]; then
+  pass "investigation streamed to status=done"
+else
+  die "investigation did not reach status=done within 6s (last status=$STATUS)"
+fi
+
+# ---------------------------------------------------------------------------
+# Step 13: Snapshot now reports investigationId + status=done for the widget
+# ---------------------------------------------------------------------------
+section "Step 13/13: snapshot exposes investigationId + done status"
+SNAP3_JSON="$(curl -sS "$BASE_URL/dashboards/$DASHBOARD_ID/snapshot")"
+SNAP_INV_ID="$(echo "$SNAP3_JSON" | jq -r '.widgets[] | select(.title=="Critical errors (15m)") | .investigationId // ""')"
+SNAP_INV_STATUS="$(echo "$SNAP3_JSON" | jq -r '.widgets[] | select(.title=="Critical errors (15m)") | .investigationStatus // ""')"
+
+if [ "$SNAP_INV_ID" = "$INVESTIGATION_ID" ]; then
+  pass "snapshot.widgets[errors].investigationId matches seeded id"
+else
+  fail "snapshot investigationId=$SNAP_INV_ID did not match $INVESTIGATION_ID"
+fi
+if [ "$SNAP_INV_STATUS" = "done" ]; then
+  pass "snapshot.widgets[errors].investigationStatus = done"
+else
+  fail "snapshot investigationStatus=$SNAP_INV_STATUS, expected done"
+fi
+
+# Read the report content to confirm it's the seeder's polished body
+REPORT="$(curl -sS "$BASE_URL/investigations/$INVESTIGATION_ID" | jq -r '.investigation.report // ""')"
+if echo "$REPORT" | grep -q "What to check first" && echo "$REPORT" | grep -q "Blast radius"; then
+  pass "investigation report contains expected sections"
+else
+  fail "investigation report missing expected sections"
+  info "Report preview: $(echo "$REPORT" | head -c 200)..."
+fi
+
+# ---------------------------------------------------------------------------
 # Cleanup demo state: POST /demo/control/reset
 # ---------------------------------------------------------------------------
 section "Cleanup: POST /demo/control/reset"
