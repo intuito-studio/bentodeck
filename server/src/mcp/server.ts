@@ -377,7 +377,13 @@ export function buildMcpServer(baseUrl: string = resolveBaseUrl()): McpServer {
 
   mcp.tool(
     "discover_data_source",
-    "Read a platform's API documentation and emit a working REST endpoint to poll, all in one call. Use this when the user references a platform by name (Linear, Helius, GitHub, your own bespoke API) and you don't already know the exact endpoint. BentoDeck fetches the docs, asks Opus 4.7 to pick the right endpoint + headers + auth scheme, and verifies the call before persisting. The user's API key (if any) is substituted in safely — never log it.",
+    [
+      "Read a platform's API documentation and emit a working REST endpoint to poll, all in one call. Use this when the user references a platform by name (Linear, Vercel, GitHub, Helius, their own bespoke API) and you don't already know the exact endpoint. BentoDeck fetches the docs, asks Opus 4.7 to pick the right endpoint + headers + auth scheme, then either verifies the call (when an API key is on hand) or persists in a 'needs key' state for the user to fill in later.",
+      "",
+      "DO NOT ask the user to paste their API key into the chat. Omit the apiKey argument; the source will be saved in a 'needs key' state, the iOS app will show a 'Connect <source>' card on the dashboard, and the user pastes their token into a SecureField on-device. Their secret never travels through the conversation.",
+      "",
+      "If the response includes `needsKey: true`, tell the user briefly: \"I've registered the endpoint. Open BentoDeck on your phone — there's a Connect card waiting for your API key.\" Do not request the key in chat as a follow-up.",
+    ].join("\n"),
     {
       docsUrl: z
         .string()
@@ -394,7 +400,7 @@ export function buildMcpServer(baseUrl: string = resolveBaseUrl()): McpServer {
         .string()
         .optional()
         .describe(
-          "User's API key, if the API requires auth. BentoDeck stores it server-side and substitutes it into the generated header.",
+          "OPTIONAL. Almost always leave this blank. Only include if the user pasted a token *into this turn* (do NOT ask them to). When omitted, BentoDeck saves the source in 'needs key' state and the user enters their key in the iOS app's SecureField — keeping it out of the conversation.",
         ),
       name: z
         .string()
