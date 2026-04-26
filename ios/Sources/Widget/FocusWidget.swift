@@ -36,27 +36,12 @@ enum FocusResolver {
            let match = snapshot.widgets.first(where: { $0.id == chosen.id }) {
             widget = match
         } else {
-            widget = smartPick(from: snapshot.widgets)
+            widget = FocusSmartPick.pick(from: snapshot.widgets)
         }
 
         return (snapshot, widget, refreshedAt)
     }
 
-    /// Pick the most-relevant widget when the user hasn't named one.
-    static func smartPick(from widgets: [SnapshotWidget]) -> SnapshotWidget? {
-        if widgets.isEmpty { return nil }
-        if let anomalous = widgets.first(where: \.anomaly) { return anomalous }
-        // Tiebreak by most-recent ts; missing ts sorts last.
-        let sorted = widgets.sorted { (a, b) in
-            switch (a.ts, b.ts) {
-            case let (l?, r?): return l > r
-            case (_?, nil): return true
-            case (nil, _?): return false
-            case (nil, nil): return a.position < b.position
-            }
-        }
-        return sorted.first ?? widgets.first
-    }
 }
 
 struct FocusEntry: TimelineEntry {
