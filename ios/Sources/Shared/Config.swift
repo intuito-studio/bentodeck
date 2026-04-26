@@ -48,6 +48,20 @@ enum BentoDeckLink {
         return c.url!
     }
 
+    /// Tap a "Connect" home-screen widget → app opens with this URL → the
+    /// active dashboard view presents the API-key sheet for the source.
+    static func dataSourceKey(sourceId: String, sourceName: String?) -> URL {
+        var c = URLComponents()
+        c.scheme = scheme
+        c.host = "data-source-key"
+        var items: [URLQueryItem] = [URLQueryItem(name: "id", value: sourceId)]
+        if let sourceName, !sourceName.isEmpty {
+            items.append(URLQueryItem(name: "name", value: sourceName))
+        }
+        c.queryItems = items
+        return c.url!
+    }
+
     /// Parse an incoming deep link into a typed destination. Returns nil
     /// for malformed URLs or unknown hosts.
     static func parse(_ url: URL) -> Destination? {
@@ -69,6 +83,9 @@ enum BentoDeckLink {
         case "investigation":
             guard let id = dict["id"] else { return nil }
             return .investigation(id: id, widgetTitle: dict["widgetTitle"] ?? "Widget")
+        case "data-source-key":
+            guard let id = dict["id"] else { return nil }
+            return .dataSourceKey(sourceId: id, sourceName: dict["name"])
         default:
             return nil
         }
@@ -77,5 +94,6 @@ enum BentoDeckLink {
     enum Destination: Hashable {
         case dashboard(id: String)
         case investigation(id: String, widgetTitle: String)
+        case dataSourceKey(sourceId: String, sourceName: String?)
     }
 }

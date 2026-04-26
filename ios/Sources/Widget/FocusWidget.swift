@@ -154,10 +154,19 @@ struct FocusWidget: Widget {
         }
     }
 
-    /// Tap → land on the widget's parent dashboard so the user can drill in.
-    /// If the focused widget has an open investigation, deep-link straight to
-    /// the report instead.
+    /// Tap → most-actionable target for the picked widget. Priority:
+    ///   1. Source needs a key → open the API-key sheet so a tap connects.
+    ///   2. Open investigation → land on the report directly.
+    ///   3. Otherwise, the parent dashboard.
     private func deepLink(for entry: FocusEntry) -> URL? {
+        if let widget = entry.widget,
+           widget.needsKey == true,
+           let sourceId = widget.sourceId {
+            return BentoDeckLink.dataSourceKey(
+                sourceId: sourceId,
+                sourceName: widget.sourceName
+            )
+        }
         if let widget = entry.widget,
            let invId = widget.investigationId {
             return BentoDeckLink.investigation(id: invId, widgetTitle: widget.title)

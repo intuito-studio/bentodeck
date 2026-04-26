@@ -21,12 +21,19 @@ struct HomeWidget: Widget {
     }
 
     private func deepLink(for entry: BentoEntry) -> URL? {
-        // Tapping the widget always lands on the dashboard the widget
-        // is mirroring. If there's an anomaly with an investigation,
-        // a tap on the right tile would ideally land on that report —
-        // WidgetKit only supports a single widgetURL per family, so
-        // we keep it simple and route to the dashboard view, which
-        // shows the anomaly banner that's already a tap target.
+        // WidgetKit only supports one widgetURL per tile, so we pick the
+        // most-actionable target. Priority:
+        //   1. A widget in "needs key" state → open the API-key sheet for
+        //      that source so a tap connects, rather than landing on a
+        //      dashboard full of "Connect" cards.
+        //   2. Otherwise, fall back to the dashboard.
+        if let needsKey = entry.snapshot?.widgets.first(where: { $0.needsKey == true }),
+           let sourceId = needsKey.sourceId {
+            return BentoDeckLink.dataSourceKey(
+                sourceId: sourceId,
+                sourceName: needsKey.sourceName
+            )
+        }
         guard let id = entry.snapshot?.dashboardId else { return nil }
         return BentoDeckLink.dashboard(id: id)
     }
@@ -159,6 +166,8 @@ struct HomeWidgetView: View {
         let showSparkline =
             history.count >= 2
             && (widget?.type == .sparkline || widget?.type == .number_with_trend)
+        let needsKey = widget?.needsKey == true
+
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Text(widget?.title.uppercased() ?? "—")
@@ -171,31 +180,35 @@ struct HomeWidgetView: View {
                         .foregroundStyle(Color(hex: entry.theme.colors.negative))
                 }
             }
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(widget?.value?.displayString ?? "—")
-                    .font(entry.theme.primaryFont(
-                        size: showSparkline ? fontScale.valueWithSparklineSize : fontScale.valueSize
-                    ))
-                    .foregroundStyle(Color(hex: entry.theme.colors.primary))
-                    .minimumScaleFactor(0.4)
-                    .lineLimit(1)
-                TrendBadge(
-                    history: history,
-                    positive: Color(hex: entry.theme.colors.positive),
-                    negative: Color(hex: entry.theme.colors.negative),
-                    neutral: Color(hex: entry.theme.colors.secondary),
-                    font: .system(size: fontScale.trendSize, weight: .semibold)
-                )
-            }
-            if showSparkline {
-                Sparkline(
-                    values: history,
-                    stroke: Color(hex: entry.theme.chart.stroke),
-                    fillStart: Color(hex: entry.theme.chart.fillStart),
-                    fillEnd: Color(hex: entry.theme.chart.fillEnd),
-                    lineWidth: fontScale.sparklineLineWidth
-                )
-                .frame(height: fontScale.sparklineHeight)
+            if needsKey {
+                tileNeedsKeyBody(widget, fontScale: fontScale)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(widget?.value?.displayString ?? "—")
+                        .font(entry.theme.primaryFont(
+                            size: showSparkline ? fontScale.valueWithSparklineSize : fontScale.valueSize
+                        ))
+                        .foregroundStyle(Color(hex: entry.theme.colors.primary))
+                        .minimumScaleFactor(0.4)
+                        .lineLimit(1)
+                    TrendBadge(
+                        history: history,
+                        positive: Color(hex: entry.theme.colors.positive),
+                        negative: Color(hex: entry.theme.colors.negative),
+                        neutral: Color(hex: entry.theme.colors.secondary),
+                        font: .system(size: fontScale.trendSize, weight: .semibold)
+                    )
+                }
+                if showSparkline {
+                    Sparkline(
+                        values: history,
+                        stroke: Color(hex: entry.theme.chart.stroke),
+                        fillStart: Color(hex: entry.theme.chart.fillStart),
+                        fillEnd: Color(hex: entry.theme.chart.fillEnd),
+                        lineWidth: fontScale.sparklineLineWidth
+                    )
+                    .frame(height: fontScale.sparklineHeight)
+                }
             }
         }
         .padding(.vertical, fontScale.vPad)
@@ -209,6 +222,26 @@ struct HomeWidgetView: View {
                 cornerRadius: fontScale.corner
             )
         )
+    }
+
+    @ViewBuilder
+    private func tileNeedsKeyBody(_ widget: SnapshotWidget?, fontScale: TileFontScale) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: fontScale.valueWithSparklineSize - 4, weight: .semibold))
+                    .foregroundStyle(Color(hex: entry.theme.colors.accent))
+                Text("Connect")
+                    .font(entry.theme.primaryFont(size: fontScale.valueWithSparklineSize - 2))
+                    .foregroundStyle(Color(hex: entry.theme.colors.primary))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+            }
+            Text(widget?.sourceName ?? "Add API key")
+                .font(entry.theme.secondaryFont(size: fontScale.titleSize))
+                .foregroundStyle(Color(hex: entry.theme.colors.secondary))
+                .lineLimit(1)
+        }
     }
 }
 

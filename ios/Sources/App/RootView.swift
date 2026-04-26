@@ -6,6 +6,7 @@ struct RootView: View {
     @State private var pageIndex: Int = 1
     @State private var isLoading = false
     @State private var errorText: String?
+    @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
 
     var body: some View {
         NavigationStack {
@@ -223,6 +224,20 @@ struct RootView: View {
         case .investigation:
             if let pinned = SharedStore.shared.pinnedDashboardId {
                 swipe(to: pinned)
+            }
+        case let .dataSourceKey(sourceId, sourceName):
+            // Source-scoped, not dashboard-scoped: any active dashboard
+            // page can host the sheet. Stash the payload on the router and
+            // make sure SOMETHING is pinned so a DashboardDetailView mounts
+            // and picks it up via .onAppear / .onChange.
+            deepLinkRouter.pendingKeyEntry = PendingKeyEntryPayload(
+                sourceId: sourceId,
+                sourceName: sourceName
+            )
+            if dashboards.isEmpty == false,
+               SharedStore.shared.pinnedDashboardId == nil,
+               let first = dashboards.first {
+                swipe(to: first.id)
             }
         }
     }

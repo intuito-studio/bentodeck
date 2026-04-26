@@ -5,10 +5,12 @@ import UserNotifications
 @main
 struct BentoDeckApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var deepLinkRouter = DeepLinkRouter()
 
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environmentObject(deepLinkRouter)
                 .task {
                     await RefreshManager.shared.requestNotificationPermission()
                     RefreshManager.shared.scheduleNextBackgroundRefresh()

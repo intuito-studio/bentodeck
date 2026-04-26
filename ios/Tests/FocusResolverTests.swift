@@ -19,7 +19,10 @@ final class FocusSmartPickTests: XCTestCase {
             ts: ts,
             history: nil,
             investigationId: nil,
-            investigationStatus: nil
+            investigationStatus: nil,
+            sourceId: nil,
+            sourceName: nil,
+            needsKey: nil
         )
     }
 

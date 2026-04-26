@@ -106,7 +106,10 @@ final class SharedStoreTests: XCTestCase {
                     ts: "2026-04-23T12:00:00Z",
                     history: nil,
                     investigationId: nil,
-                    investigationStatus: nil
+                    investigationStatus: nil,
+                    sourceId: nil,
+                    sourceName: nil,
+                    needsKey: nil
                 )
             ]
         )

@@ -88,27 +88,56 @@ struct FocusView: View {
 
     @ViewBuilder
     private func valueBlock(widget: SnapshotWidget, scale: FocusScale) -> some View {
-        switch widget.type {
-        case .list:
-            listBody(widget: widget, scale: scale)
-        case .status:
-            statusBody(widget: widget, scale: scale)
-        default:
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(widget.value?.displayString ?? "—")
-                    .font(theme.primaryFont(size: scale.valueSize))
-                    .foregroundStyle(Color(hex: theme.colors.primary))
-                    .minimumScaleFactor(0.4)
-                    .lineLimit(1)
-                TrendBadge(
-                    history: widget.history ?? [],
-                    positive: Color(hex: theme.colors.positive),
-                    negative: Color(hex: theme.colors.negative),
-                    neutral: Color(hex: theme.colors.secondary),
-                    font: .system(size: scale.trendSize, weight: .semibold)
-                )
-                Spacer(minLength: 0)
+        // "Needs key" comes before everything else: the widget can't have a
+        // value yet because the source hasn't been polled. The whole tile
+        // already has a widgetURL pointing at the API-key sheet.
+        if widget.needsKey == true {
+            needsKeyBlock(widget: widget, scale: scale)
+        } else {
+            switch widget.type {
+            case .list:
+                listBody(widget: widget, scale: scale)
+            case .status:
+                statusBody(widget: widget, scale: scale)
+            default:
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(widget.value?.displayString ?? "—")
+                        .font(theme.primaryFont(size: scale.valueSize))
+                        .foregroundStyle(Color(hex: theme.colors.primary))
+                        .minimumScaleFactor(0.4)
+                        .lineLimit(1)
+                    TrendBadge(
+                        history: widget.history ?? [],
+                        positive: Color(hex: theme.colors.positive),
+                        negative: Color(hex: theme.colors.negative),
+                        neutral: Color(hex: theme.colors.secondary),
+                        font: .system(size: scale.trendSize, weight: .semibold)
+                    )
+                    Spacer(minLength: 0)
+                }
             }
+        }
+    }
+
+    private func needsKeyBlock(widget: SnapshotWidget, scale: FocusScale) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: scale.valueSize * 0.45, weight: .semibold))
+                    .foregroundStyle(Color(hex: theme.colors.accent))
+                Text("Connect")
+                    .font(theme.primaryFont(size: scale.valueSize * 0.55))
+                    .foregroundStyle(Color(hex: theme.colors.primary))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+            }
+            Text(widget.sourceName ?? "Add API key")
+                .font(theme.secondaryFont(size: scale.titleSize + 2))
+                .foregroundStyle(Color(hex: theme.colors.secondary))
+                .lineLimit(1)
+            Text("Tap to add API key")
+                .font(theme.secondaryFont(size: scale.titleSize))
+                .foregroundStyle(Color(hex: theme.colors.accent))
         }
     }
 

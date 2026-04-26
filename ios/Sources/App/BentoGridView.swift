@@ -91,6 +91,9 @@ struct BentoGridView: View {
     @Binding var editMode: Bool
     @ObservedObject var model: BentoLayoutModel
     let onAnomalyTap: (SnapshotWidget) -> Void
+    /// Tap on a widget whose data source is in needs-key state. The host
+    /// presents an APIKeySheet that POSTs to /data-sources/:id/key.
+    var onNeedsKeyTap: (SnapshotWidget) -> Void = { _ in }
     var useGlass: Bool = false
 
     @State private var ghost: DragGhost?
@@ -141,6 +144,7 @@ struct BentoGridView: View {
                                 gap: gap,
                                 onLongPress: enterEditMode,
                                 onAnomalyTap: { onAnomalyTap(widget) },
+                                onNeedsKeyTap: { onNeedsKeyTap(widget) },
                                 onTapResize: {
                                     model.cycle(widgetId: widget.id, in: widgets)
                                 },
@@ -234,6 +238,7 @@ private struct BentoCell: View {
     let gap: CGFloat
     let onLongPress: () -> Void
     let onAnomalyTap: () -> Void
+    let onNeedsKeyTap: () -> Void
     let onTapResize: () -> Void
     let onDragChange: (LayoutSize) -> Void
     let onDragEnd: (LayoutSize) -> Void
@@ -324,7 +329,11 @@ private struct BentoCell: View {
             displaySize: displaySize,
             useGlass: useGlass
         )
-        if !editMode, widget.anomaly, widget.investigationId != nil {
+        if !editMode, widget.needsKey == true {
+            // Highest-priority tap: source is locked behind an API key.
+            Button(action: onNeedsKeyTap) { card }
+                .buttonStyle(.plain)
+        } else if !editMode, widget.anomaly, widget.investigationId != nil {
             Button(action: onAnomalyTap) { card }
                 .buttonStyle(.plain)
         } else {

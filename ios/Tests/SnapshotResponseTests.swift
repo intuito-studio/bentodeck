@@ -181,6 +181,76 @@ final class SnapshotResponseTests: XCTestCase {
         XCTAssertEqual(err.investigationStatus, "running")
     }
 
+    func testDecodesWidgetWithSourceIdAndNeedsKey() throws {
+        // Mirrors the new fields the server emits per widget so the iOS
+        // app can render the "Connect <source>" warning + know which
+        // source id to POST the key to.
+        let json = """
+        {
+          "dashboardId": "dash-key",
+          "name": "Locked",
+          "themeId": "default",
+          "theme": null,
+          "widgets": [
+            {
+              "id": "w-vercel",
+              "title": "Vercel deploys",
+              "type": "number",
+              "position": 0,
+              "value": null,
+              "anomaly": false,
+              "anomalyExplanation": null,
+              "ts": null,
+              "history": [],
+              "investigationId": null,
+              "investigationStatus": null,
+              "sourceId": "src-vercel",
+              "sourceName": "vercel",
+              "needsKey": true
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+
+        let resp = try JSONDecoder().decode(SnapshotResponse.self, from: json)
+        let w = resp.widgets[0]
+        XCTAssertEqual(w.sourceId, "src-vercel")
+        XCTAssertEqual(w.sourceName, "vercel")
+        XCTAssertEqual(w.needsKey, true)
+    }
+
+    func testWidgetDecodesWhenNeedsKeyFieldsAbsent() throws {
+        // Back-compat: a snapshot persisted before the needs-key fields
+        // existed (e.g. cached locally during an upgrade) must still
+        // decode. The new fields default to nil.
+        let json = """
+        {
+          "dashboardId": "old",
+          "name": "Old",
+          "themeId": "default",
+          "theme": null,
+          "widgets": [
+            {
+              "id": "w-1",
+              "title": "MRR",
+              "type": "number",
+              "position": 0,
+              "value": 1000,
+              "anomaly": false,
+              "anomalyExplanation": null,
+              "ts": "2026-04-26T12:00:00Z"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+
+        let resp = try JSONDecoder().decode(SnapshotResponse.self, from: json)
+        let w = resp.widgets[0]
+        XCTAssertNil(w.sourceId)
+        XCTAssertNil(w.sourceName)
+        XCTAssertNil(w.needsKey)
+    }
+
     func testSnapshotResponseDecodesWithoutOptionalTheme() throws {
         let json = """
         {

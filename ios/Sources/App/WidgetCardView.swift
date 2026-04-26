@@ -53,17 +53,45 @@ struct WidgetCardView: View {
 
     @ViewBuilder
     private var valueBody: some View {
-        switch widget.type {
-        case .list:
-            listBody
-        case .status:
-            statusBody
-        case .sparkline:
-            sparklineBody
-        case .number_with_trend:
-            numberWithTrendBody
-        default:
-            numberBody
+        // When the underlying source is waiting on an API key, hide the
+        // normal value body entirely and show a "Connect" warning. The
+        // dashboard's onTap handler is wired (in BentoCell + the home-screen
+        // widget) to open the key-entry sheet for `widget.sourceId`.
+        if widget.needsKey == true {
+            needsKeyBody
+        } else {
+            switch widget.type {
+            case .list:
+                listBody
+            case .status:
+                statusBody
+            case .sparkline:
+                sparklineBody
+            case .number_with_trend:
+                numberWithTrendBody
+            default:
+                numberBody
+            }
+        }
+    }
+
+    private var needsKeyBody: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: displaySize == .hero ? 20 : 14, weight: .semibold))
+                    .foregroundStyle(Color(hex: theme.colors.accent))
+                Text("Connect")
+                    .font(theme.primaryFont(size: displaySize == .hero ? 24 : 18))
+                    .foregroundStyle(Color(hex: theme.colors.primary))
+            }
+            Text(widget.sourceName ?? "this source")
+                .font(theme.secondaryFont(size: displaySize == .hero ? 13 : 11))
+                .foregroundStyle(Color(hex: theme.colors.secondary))
+                .lineLimit(1)
+            Text("Tap to add API key")
+                .font(theme.secondaryFont(size: displaySize == .hero ? 11 : 10))
+                .foregroundStyle(Color(hex: theme.colors.accent))
         }
     }
 

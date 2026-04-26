@@ -16,6 +16,11 @@ struct DashboardDetailView: View {
     @State private var editMode: Bool = false
     @State private var background: DashboardBackground = .theme
     @State private var photoPickerItem: PhotosPickerItem?
+    /// Active "Connect <source>" sheet, if any. Set by the BentoCell's
+    /// onNeedsKeyTap callback or by an incoming bentodeck://data-source-key
+    /// deep link forwarded from RootView via DeepLinkRouter.
+    @State private var pendingKeyEntry: PendingKeyEntry?
+    @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
     @StateObject private var layoutModel: BentoLayoutModel
 
     init(dashboardId: String, isActive: Bool = true) {
@@ -71,6 +76,34 @@ struct DashboardDetailView: View {
         .onChange(of: photoPickerItem) { _, newItem in
             guard let newItem else { return }
             Task { await applyPickedPhoto(newItem) }
+        }
+        .sheet(item: $pendingKeyEntry) { entry in
+            APIKeySheet(
+                sourceId: entry.sourceId,
+                sourceName: entry.sourceName,
+                theme: snapshot?.theme ?? .fallback,
+                onSaved: { Task { await reload() } }
+            )
+        }
+        .onChange(of: deepLinkRouter.pendingKeyEntry) { _, payload in
+            // Deep link from a home-screen widget tap. Only the active
+            // carousel page should consume the payload — otherwise every
+            // mounted page would race to present its own sheet.
+            guard isActive, let payload else { return }
+            pendingKeyEntry = PendingKeyEntry(
+                sourceId: payload.sourceId,
+                sourceName: payload.sourceName ?? "this source"
+            )
+            deepLinkRouter.pendingKeyEntry = nil
+        }
+        .onAppear {
+            // Pick up a payload that arrived before this page was active.
+            guard isActive, let payload = deepLinkRouter.pendingKeyEntry else { return }
+            pendingKeyEntry = PendingKeyEntry(
+                sourceId: payload.sourceId,
+                sourceName: payload.sourceName ?? "this source"
+            )
+            deepLinkRouter.pendingKeyEntry = nil
         }
     }
 
@@ -152,6 +185,13 @@ struct DashboardDetailView: View {
                             theme: theme
                         )
                     }
+                },
+                onNeedsKeyTap: { widget in
+                    guard let sourceId = widget.sourceId else { return }
+                    pendingKeyEntry = PendingKeyEntry(
+                        sourceId: sourceId,
+                        sourceName: widget.sourceName ?? "this source"
+                    )
                 },
                 useGlass: background == .image
             )
@@ -253,6 +293,13 @@ private struct SelectedInvestigation: Hashable, Identifiable {
     let widgetTitle: String
     let theme: Theme
     var id: String { investigationId }
+}
+
+/// Identifiable payload for the .sheet(item:) presentation of APIKeySheet.
+private struct PendingKeyEntry: Identifiable, Hashable {
+    let sourceId: String
+    let sourceName: String
+    var id: String { sourceId }
 }
 
 private struct AnomalyBanner: View {

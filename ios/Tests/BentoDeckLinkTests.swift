@@ -50,4 +50,37 @@ final class BentoDeckLinkTests: XCTestCase {
         }
         XCTAssertEqual(title, "Widget")
     }
+
+    func testDataSourceKeyLinkRoundtripWithName() throws {
+        let url = BentoDeckLink.dataSourceKey(
+            sourceId: "src-vercel-1",
+            sourceName: "vercel"
+        )
+        XCTAssertEqual(url.host, "data-source-key")
+
+        let parsed = try XCTUnwrap(BentoDeckLink.parse(url))
+        guard case let .dataSourceKey(id, name) = parsed else {
+            return XCTFail("expected .dataSourceKey, got \(parsed)")
+        }
+        XCTAssertEqual(id, "src-vercel-1")
+        XCTAssertEqual(name, "vercel")
+    }
+
+    func testDataSourceKeyLinkRoundtripWithoutName() throws {
+        let url = BentoDeckLink.dataSourceKey(
+            sourceId: "src-only",
+            sourceName: nil
+        )
+        let parsed = try XCTUnwrap(BentoDeckLink.parse(url))
+        guard case let .dataSourceKey(id, name) = parsed else {
+            return XCTFail("expected .dataSourceKey, got \(parsed)")
+        }
+        XCTAssertEqual(id, "src-only")
+        XCTAssertNil(name)
+    }
+
+    func testDataSourceKeyLinkRequiresIdQuery() {
+        let url = URL(string: "bentodeck://data-source-key")!
+        XCTAssertNil(BentoDeckLink.parse(url))
+    }
 }

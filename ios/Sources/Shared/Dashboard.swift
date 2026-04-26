@@ -36,6 +36,19 @@ struct SnapshotWidget: Codable, Identifiable, Hashable {
     /// id of the latest investigation associated with this widget, if any.
     let investigationId: String?
     let investigationStatus: String?
+    /// id of the data source this widget pulls from. Used by the
+    /// "needs API key" affordance to know which source to write the key to.
+    /// Optional for back-compat with snapshots written before this field
+    /// existed.
+    let sourceId: String?
+    /// Friendly name of the data source (e.g. "vercel", "linear") so the
+    /// "Connect <name>" warning reads cleanly without a UUID.
+    let sourceName: String?
+    /// True when the widget's data source is waiting on the user to supply
+    /// an API key. The card flips to a "Connect" warning state in the app
+    /// and the home-screen widget; tapping deep-links into a SecureField
+    /// where the user pastes their token.
+    let needsKey: Bool?
 }
 
 /// Widget type enum that is string-tolerant — if the server adds a new type
