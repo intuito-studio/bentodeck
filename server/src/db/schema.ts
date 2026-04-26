@@ -60,6 +60,35 @@ const SCHEMA = `
     json        TEXT NOT NULL,
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  -- Long-running incident reports written by Claude Managed Agents.
+  -- Decoupled from the per-snapshot quick anomaly explanation so a
+  -- multi-paragraph investigation can take its time without blocking
+  -- the wrist-buzz path.
+  CREATE TABLE IF NOT EXISTS investigations (
+    id            TEXT PRIMARY KEY,
+    widget_id     TEXT NOT NULL,
+    snapshot_id   INTEGER,
+    session_id    TEXT,
+    status        TEXT NOT NULL DEFAULT 'pending', -- pending | running | done | failed
+    title         TEXT,
+    report        TEXT,
+    error         TEXT,
+    created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at  TEXT,
+    FOREIGN KEY (widget_id) REFERENCES widgets(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_investigations_widget_created
+    ON investigations(widget_id, created_at DESC);
+
+  -- Tiny KV table for backend-process settings that must outlive a restart
+  -- (e.g., the cached Managed Agents agent_id and environment_id so we
+  -- don't re-create them on every boot).
+  CREATE TABLE IF NOT EXISTS kv (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `;
 
 export function initDb(): Database.Database {

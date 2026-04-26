@@ -245,6 +245,16 @@ export function latestSnapshot(widgetId: string): {
   };
 }
 
+export function latestSnapshotId(widgetId: string): number | null {
+  const row = getDb()
+    .prepare(
+      `SELECT id FROM snapshots WHERE widget_id = ?
+       ORDER BY ts DESC LIMIT 1`,
+    )
+    .get(widgetId) as { id: number } | undefined;
+  return row?.id ?? null;
+}
+
 export function recentSnapshots(widgetId: string, limit = 50): Array<{
   value: unknown;
   anomalyFlag: boolean;
@@ -304,6 +314,139 @@ export function listThemes(): Theme[] {
     )
     .all() as Array<{ json: string }>;
   return rows.map((r) => JSON.parse(r.json) as Theme);
+}
+
+// ---------- KV (small backend-process settings) ----------
+
+export function kvGet(key: string): string | null {
+  const row = getDb()
+    .prepare(`SELECT value FROM kv WHERE key = ?`)
+    .get(key) as { value: string } | undefined;
+  return row?.value ?? null;
+}
+
+export function kvSet(key: string, value: string): void {
+  getDb()
+    .prepare(
+      `INSERT INTO kv (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    )
+    .run(key, value);
+}
+
+// ---------- Investigations ----------
+
+export type Investigation = {
+  id: string;
+  widgetId: string;
+  snapshotId: number | null;
+  sessionId: string | null;
+  status: "pending" | "running" | "done" | "failed";
+  title: string | null;
+  report: string | null;
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+};
+
+type InvestigationRow = {
+  id: string;
+  widget_id: string;
+  snapshot_id: number | null;
+  session_id: string | null;
+  status: Investigation["status"];
+  title: string | null;
+  report: string | null;
+  error: string | null;
+  created_at: string;
+  completed_at: string | null;
+};
+
+function rowToInvestigation(r: InvestigationRow): Investigation {
+  return {
+    id: r.id,
+    widgetId: r.widget_id,
+    snapshotId: r.snapshot_id,
+    sessionId: r.session_id,
+    status: r.status,
+    title: r.title,
+    report: r.report,
+    error: r.error,
+    createdAt: r.created_at,
+    completedAt: r.completed_at,
+  };
+}
+
+export function createInvestigation(args: {
+  id: string;
+  widgetId: string;
+  snapshotId?: number | null;
+}): Investigation {
+  getDb()
+    .prepare(
+      `INSERT INTO investigations (id, widget_id, snapshot_id, status)
+       VALUES (?, ?, ?, 'pending')`,
+    )
+    .run(args.id, args.widgetId, args.snapshotId ?? null);
+  return getInvestigation(args.id)!;
+}
+
+export function getInvestigation(id: string): Investigation | null {
+  const row = getDb()
+    .prepare(`SELECT * FROM investigations WHERE id = ?`)
+    .get(id) as InvestigationRow | undefined;
+  return row ? rowToInvestigation(row) : null;
+}
+
+export function listInvestigationsForWidget(
+  widgetId: string,
+  limit = 10,
+): Investigation[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT * FROM investigations WHERE widget_id = ?
+       ORDER BY created_at DESC LIMIT ?`,
+    )
+    .all(widgetId, limit) as InvestigationRow[];
+  return rows.map(rowToInvestigation);
+}
+
+export function updateInvestigation(
+  id: string,
+  patch: Partial<
+    Pick<Investigation, "status" | "sessionId" | "title" | "report" | "error">
+  >,
+): void {
+  const set: string[] = [];
+  const vals: unknown[] = [];
+  if (patch.status !== undefined) {
+    set.push("status = ?");
+    vals.push(patch.status);
+  }
+  if (patch.sessionId !== undefined) {
+    set.push("session_id = ?");
+    vals.push(patch.sessionId);
+  }
+  if (patch.title !== undefined) {
+    set.push("title = ?");
+    vals.push(patch.title);
+  }
+  if (patch.report !== undefined) {
+    set.push("report = ?");
+    vals.push(patch.report);
+  }
+  if (patch.error !== undefined) {
+    set.push("error = ?");
+    vals.push(patch.error);
+  }
+  if (patch.status === "done" || patch.status === "failed") {
+    set.push("completed_at = datetime('now')");
+  }
+  if (set.length === 0) return;
+  vals.push(id);
+  getDb()
+    .prepare(`UPDATE investigations SET ${set.join(", ")} WHERE id = ?`)
+    .run(...vals);
 }
 
 export function markLatestSnapshotAnomaly(

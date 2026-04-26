@@ -1,5 +1,6 @@
 import jmespath from "jmespath";
 import { evaluateAnomaly } from "../ai/anomaly.js";
+import { spawnInvestigation } from "../ai/investigator.js";
 import {
   latestSnapshot,
   listAllWidgets,
@@ -155,6 +156,14 @@ async function checkAnomalyForWidget(
       log.info(
         `[anomaly] widget=${widget.id} title="${widget.title}" — ${result.explanation}`,
       );
+      // Kick off a deeper Managed Agents investigation in the background.
+      // The wrist-buzz path is already complete by the time this runs;
+      // the investigation report shows up later when the user taps in.
+      spawnInvestigation({
+        widget,
+        anomalyExplanation: result.explanation ?? "",
+        currentValue,
+      });
     }
   } catch (err) {
     log.warn(

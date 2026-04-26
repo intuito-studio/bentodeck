@@ -10,10 +10,13 @@ import {
   deleteDashboard,
   getDashboard,
   getDataSource,
+  getInvestigation,
   getTheme,
+  getWidget,
   latestSnapshot,
   listDashboards,
   listDataSources,
+  listInvestigationsForWidget,
   listThemes,
   listWidgetsForDashboard,
   saveLastSample,
@@ -266,6 +269,22 @@ export function buildRoutes(): Hono {
       );
     },
   );
+
+  // -------- investigations (Managed Agents reports) --------
+
+  app.get("/widgets/:id/investigations", (c) => {
+    const widgetId = c.req.param("id");
+    const widget = getWidget(widgetId);
+    if (!widget) return c.json({ error: "widget not found" }, 404);
+    const investigations = listInvestigationsForWidget(widgetId);
+    return c.json({ investigations });
+  });
+
+  app.get("/investigations/:id", (c) => {
+    const inv = getInvestigation(c.req.param("id"));
+    if (!inv) return c.json({ error: "not found" }, 404);
+    return c.json({ investigation: inv });
+  });
 
   // -------- themes --------
 
