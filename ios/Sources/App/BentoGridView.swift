@@ -98,15 +98,16 @@ struct BentoGridView: View {
     private let gap: CGFloat = 12
     private let hPadding: CGFloat = 16
     private let vPadding: CGFloat = 12
-    private let minRowHeight: CGFloat = 120
-    private let maxRowHeight: CGFloat = 280
 
     var body: some View {
         GeometryReader { geo in
             let packed = computePacked()
             let totalRows = max(1, BentoLayout.rowCount(packed))
             let columnWidth = max(0, (geo.size.width - 2 * hPadding - gap * CGFloat(columns - 1)) / CGFloat(columns))
-            let rowHeight = clampedRowHeight(available: geo.size.height - 2 * vPadding, rows: totalRows)
+            // Row height tracks column width so a `.small` cell is always
+            // square — same fixed dimensions on every dashboard regardless of
+            // widget count. The grid scrolls when content overflows.
+            let rowHeight = columnWidth
             let contentHeight = rowHeight * CGFloat(totalRows) + gap * CGFloat(max(0, totalRows - 1))
             let totalHeight = max(contentHeight + 2 * vPadding, geo.size.height)
             let fits = (contentHeight + 2 * vPadding) <= geo.size.height
@@ -132,7 +133,6 @@ struct BentoGridView: View {
                                 widget: widget,
                                 theme: theme,
                                 size: p.cell.size,
-                                cellHeight: h,
                                 editMode: editMode,
                                 columnWidth: columnWidth,
                                 rowHeight: rowHeight,
@@ -198,12 +198,6 @@ struct BentoGridView: View {
         rowHeight * CGFloat(size.rows) + gap * CGFloat(max(0, size.rows - 1))
     }
 
-    private func clampedRowHeight(available: CGFloat, rows: Int) -> CGFloat {
-        guard rows > 0, available > 0 else { return minRowHeight }
-        let raw = available / CGFloat(rows)
-        return min(maxRowHeight, max(minRowHeight, raw))
-    }
-
     private func computePacked() -> [PackedWidget<String>] {
         let items = widgets.map { (id: $0.id, size: model.size(for: $0.id, in: widgets)) }
         return BentoLayout.pack(items)
@@ -231,7 +225,6 @@ private struct BentoCell: View {
     let widget: SnapshotWidget
     let theme: Theme
     let size: LayoutSize
-    let cellHeight: CGFloat
     let editMode: Bool
     let columnWidth: CGFloat
     let rowHeight: CGFloat
@@ -246,8 +239,7 @@ private struct BentoCell: View {
     @State private var dragStartSize: LayoutSize?
 
     private var displaySize: WidgetDisplaySize {
-        if size == .small && cellHeight < 200 { return .compact }
-        return .hero
+        WidgetDisplaySize(size)
     }
 
     var body: some View {
