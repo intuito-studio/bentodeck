@@ -23,6 +23,7 @@
 		6D44645F9230F24F62132C30 /* SnapshotValueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8930EEF19F01EC6BF63AE76 /* SnapshotValueTests.swift */; };
 		703638ED7FA8934919A8BA99 /* WidgetCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108C73115A730D83FBB2E827 /* WidgetCardView.swift */; };
 		74371F857CDCE4671F667048 /* Sparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1391BD1F68F6CA4AD060043F /* Sparkline.swift */; };
+		7C26B0108F019E2144BECFBA /* InvestigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8528CBF28F8F974774F1A2BF /* InvestigationTests.swift */; };
 		7C2D1C8A1F3C4716AE765CEB /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EC9D8FB8A885F9036C13B4 /* Provider.swift */; };
 		8368A8121912B05B7E7DC9F0 /* WidgetTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBEE93697804A93AFBE9CCE5 /* WidgetTypeTests.swift */; };
 		8C342234DAC6D520428D20BC /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6652D4E97E4CA868E7281012 /* SharedStore.swift */; };
@@ -93,6 +94,7 @@
 		76C0CEF7AF390D1D6180D97F /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		820D0ED54E66451D70FAED07 /* DashboardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardDetailView.swift; sourceTree = "<group>"; };
 		82186DB409A9A0CB85E9AD23 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		8528CBF28F8F974774F1A2BF /* InvestigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestigationTests.swift; sourceTree = "<group>"; };
 		9041D7284BA9E60806816FA4 /* HomeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidget.swift; sourceTree = "<group>"; };
 		9B7D1F823812304C825523D4 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B5472249BA7F461F6B63D61A /* BentoDeckTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BentoDeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -140,6 +142,7 @@
 			isa = PBXGroup;
 			children = (
 				646FD998400515644038D31D /* BentoDeckLinkTests.swift */,
+				8528CBF28F8F974774F1A2BF /* InvestigationTests.swift */,
 				BF02746382B308D8C8BDC49A /* JSONValueTests.swift */,
 				1C1B45115084E044505DD862 /* SharedStoreTests.swift */,
 				003DA0D8F4D0D76EDC1F4F23 /* SnapshotResponseTests.swift */,
@@ -319,6 +322,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3E9DC9857EE9D19691631A72 /* BentoDeckLinkTests.swift in Sources */,
+				7C26B0108F019E2144BECFBA /* InvestigationTests.swift in Sources */,
 				350B2A7D171A6E29C79CFA27 /* JSONValueTests.swift in Sources */,
 				A2EBB436478292175355D103 /* SharedStoreTests.swift in Sources */,
 				6B4ED0D8EB46AECFF66A014D /* SnapshotResponseTests.swift in Sources */,
