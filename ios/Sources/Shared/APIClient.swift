@@ -20,6 +20,18 @@ struct APIClient {
         return try JSONDecoder().decode(SnapshotResponse.self, from: data)
     }
 
+    func fetchInvestigation(id: String) async throws -> Investigation {
+        let url = baseURL.appendingPathComponent("investigations/\(id)")
+        let data = try await fetch(url: url)
+        return try JSONDecoder().decode(InvestigationResponse.self, from: data).investigation
+    }
+
+    func fetchInvestigations(widgetId: String) async throws -> [Investigation] {
+        let url = baseURL.appendingPathComponent("widgets/\(widgetId)/investigations")
+        let data = try await fetch(url: url)
+        return try JSONDecoder().decode(InvestigationListResponse.self, from: data).investigations
+    }
+
     private func fetch(url: URL) async throws -> Data {
         var req = URLRequest(url: url)
         req.timeoutInterval = 8
@@ -30,6 +42,29 @@ struct APIClient {
         }
         return data
     }
+}
+
+struct Investigation: Codable, Identifiable, Hashable {
+    let id: String
+    let widgetId: String
+    let snapshotId: Int?
+    let sessionId: String?
+    let status: String          // pending | running | done | failed
+    let title: String?
+    let report: String?
+    let error: String?
+    let createdAt: String
+    let completedAt: String?
+
+    var isTerminal: Bool { status == "done" || status == "failed" }
+}
+
+struct InvestigationResponse: Codable {
+    let investigation: Investigation
+}
+
+struct InvestigationListResponse: Codable {
+    let investigations: [Investigation]
 }
 
 enum APIError: LocalizedError {

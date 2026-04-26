@@ -38,6 +38,7 @@
 		EFCD37107213DF34F08411EA /* Dashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0631E05A0153DF5C1D6D0EBB /* Dashboard.swift */; };
 		F0346D96611D486017C89B64 /* ThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0205F643FEB50BB1328BCDC /* ThemeTests.swift */; };
 		F11873EF6955B7E7C9E7D063 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7D1F823812304C825523D4 /* APIClient.swift */; };
+		F252BBF8F3609827C4D62CB7 /* InvestigationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35205FBBB142EA7F70372017 /* InvestigationDetailView.swift */; };
 		F999B758A9A7E659DA149278 /* BentoDeckApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F22EACFE0372400DF478A /* BentoDeckApp.swift */; };
 		FAB6D553CAA0468DCB9EC063 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7250406F0CE2EE6D9B1A60F /* Theme.swift */; };
 		FF6701E6DF7116E9FB2B5F85 /* DashboardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820D0ED54E66451D70FAED07 /* DashboardDetailView.swift */; };
@@ -83,6 +84,7 @@
 		1391BD1F68F6CA4AD060043F /* Sparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sparkline.swift; sourceTree = "<group>"; };
 		1C1B45115084E044505DD862 /* SharedStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStoreTests.swift; sourceTree = "<group>"; };
 		2D23B5CA7B7388F7D069ED9B /* AnomalyAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnomalyAttributes.swift; sourceTree = "<group>"; };
+		35205FBBB142EA7F70372017 /* InvestigationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestigationDetailView.swift; sourceTree = "<group>"; };
 		552192F29EE2BAC427C320E6 /* AnomalyLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnomalyLiveActivity.swift; sourceTree = "<group>"; };
 		6652D4E97E4CA868E7281012 /* SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStore.swift; sourceTree = "<group>"; };
 		686F22EACFE0372400DF478A /* BentoDeckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDeckApp.swift; sourceTree = "<group>"; };
@@ -176,6 +178,7 @@
 				820D0ED54E66451D70FAED07 /* DashboardDetailView.swift */,
 				0C0872674FF04EB1399B575B /* DashboardListView.swift */,
 				D1A1D2D85A99EE428BC40333 /* Info.plist */,
+				35205FBBB142EA7F70372017 /* InvestigationDetailView.swift */,
 				82186DB409A9A0CB85E9AD23 /* LiveActivityManager.swift */,
 				F4B989F6F04FE33D22987444 /* RefreshManager.swift */,
 				DE67445684544EBCF9DA9793 /* RootView.swift */,
@@ -332,6 +335,7 @@
 				EFCD37107213DF34F08411EA /* Dashboard.swift in Sources */,
 				FF6701E6DF7116E9FB2B5F85 /* DashboardDetailView.swift in Sources */,
 				5819DB590D4C8CCCE03E325C /* DashboardListView.swift in Sources */,
+				F252BBF8F3609827C4D62CB7 /* InvestigationDetailView.swift in Sources */,
 				A9BCF9B86478D4062FB14270 /* LiveActivityManager.swift in Sources */,
 				C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */,
 				94912C7D66C3FDAF07FFED5A /* RootView.swift in Sources */,
