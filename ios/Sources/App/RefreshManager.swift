@@ -54,7 +54,17 @@ final class RefreshManager {
             SharedStore.shared.save(snapshot: snap)
             WidgetCenter.shared.reloadAllTimelines()
 
+            // Reconcile Live Activities — start one for each new anomaly,
+            // update existing ones with new explanations / investigation
+            // status, end ones whose widget recovered.
+            if #available(iOS 16.1, *) {
+                LiveActivityManager.shared.reconcile(with: snap)
+            }
+
             // Collect any anomaly widgets and fire a Local Notification.
+            // (Notification + Live Activity are complementary — notification
+            // alerts the user once, Live Activity persists on the Lock Screen
+            // for the duration of the incident.)
             let anomalies = snap.widgets.filter { $0.anomaly }
             if let first = anomalies.first {
                 await fireAnomalyNotification(

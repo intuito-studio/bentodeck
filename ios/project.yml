@@ -42,6 +42,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSLocalNetworkUsageDescription: "BentoDeck connects to the BentoDeck backend running on your Mac."
+        NSSupportsLiveActivities: true
     entitlements:
       path: BentoDeck.entitlements
       properties:
