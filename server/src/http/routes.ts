@@ -20,6 +20,7 @@ import {
   listInvestigationsForWidget,
   listThemes,
   listWidgetsForDashboard,
+  recentSnapshots,
   saveLastSample,
   saveTheme,
   setDashboardTheme,
@@ -277,6 +278,27 @@ export function buildRoutes(): Hono {
       );
     },
   );
+
+  // -------- read-side: widget state for Claude Desktop conversations --------
+
+  app.get("/widgets/:id/state", (c) => {
+    const widgetId = c.req.param("id");
+    const widget = getWidget(widgetId);
+    if (!widget) return c.json({ error: "widget not found" }, 404);
+    const latest = latestSnapshot(widgetId);
+    const recent = recentSnapshots(widgetId, 30).slice().reverse();
+    const investigations = listInvestigationsForWidget(widgetId, 5);
+    return c.json({
+      widget,
+      latest,
+      history: recent.map((r) => ({
+        value: r.value,
+        anomaly: r.anomalyFlag,
+        ts: r.ts,
+      })),
+      investigations,
+    });
+  });
 
   // -------- AI-discovered data sources (Tier-2) --------
 

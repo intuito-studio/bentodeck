@@ -26,11 +26,14 @@ describe("MCP server registration", () => {
         "add_widget",
         "list_widgets",
         "create_widget_from_intent",
+        "get_widget_state",
+        "list_investigations",
+        "get_investigation",
         "list_themes",
         "apply_theme_preset",
         "generate_theme",
       ].sort(),
     );
-    expect(names).toHaveLength(14);
+    expect(names).toHaveLength(17);
   });
 });

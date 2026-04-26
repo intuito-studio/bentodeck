@@ -271,6 +271,52 @@ export function buildMcpServer(baseUrl: string = resolveBaseUrl()): McpServer {
     },
   );
 
+  // -------- read-side: bring data back to the conversation --------
+
+  mcp.tool(
+    "get_widget_state",
+    "Read the current state of a single widget — its definition, latest value, recent history (up to 30 points, oldest→newest), and any recent investigations. Use this when the user asks 'what's happening with X?' and you need to ground your answer in real polled data, not invent it. Investigations include any Claude Managed Agents reports that have been written for this widget.",
+    { widgetId: z.string() },
+    async ({ widgetId }) => {
+      const r = await call(
+        "GET",
+        `/widgets/${encodeURIComponent(widgetId)}/state`,
+      );
+      if (!r.ok) return formatError("get_widget_state", r);
+      return json(r.data);
+    },
+  );
+
+  mcp.tool(
+    "list_investigations",
+    "List recent Claude Managed Agents incident investigations for a widget. Returns the most recent first; default limit 10. Use this to check whether an investigation report is ready before fetching it.",
+    {
+      widgetId: z.string(),
+    },
+    async ({ widgetId }) => {
+      const r = await call(
+        "GET",
+        `/widgets/${encodeURIComponent(widgetId)}/investigations`,
+      );
+      if (!r.ok) return formatError("list_investigations", r);
+      return json(r.data);
+    },
+  );
+
+  mcp.tool(
+    "get_investigation",
+    "Read a single Claude Managed Agents investigation report by id. The report is Markdown and contains: a headline, a 'what likely happened' hypothesis, a 'what to check first' runbook, and a 'blast radius' summary. Use this to discuss the report with the user in chat.",
+    { id: z.string() },
+    async ({ id }) => {
+      const r = await call(
+        "GET",
+        `/investigations/${encodeURIComponent(id)}`,
+      );
+      if (!r.ok) return formatError("get_investigation", r);
+      return json(r.data);
+    },
+  );
+
   // -------- hero AI tool --------
 
   mcp.tool(

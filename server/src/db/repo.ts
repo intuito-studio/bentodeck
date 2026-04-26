@@ -222,11 +222,14 @@ export function latestSnapshot(widgetId: string): {
   anomalyExplanation: string | null;
   ts: string;
 } | null {
+  // SQLite datetime('now') has 1s resolution; multiple snapshots written
+  // in the same second otherwise have undefined order. AUTOINCREMENT id
+  // is the strict tiebreaker that makes "latest" deterministic.
   const row = getDb()
     .prepare(
       `SELECT value_json, anomaly_flag, anomaly_explanation, ts
        FROM snapshots WHERE widget_id = ?
-       ORDER BY ts DESC LIMIT 1`,
+       ORDER BY ts DESC, id DESC LIMIT 1`,
     )
     .get(widgetId) as
     | {
@@ -249,7 +252,7 @@ export function latestSnapshotId(widgetId: string): number | null {
   const row = getDb()
     .prepare(
       `SELECT id FROM snapshots WHERE widget_id = ?
-       ORDER BY ts DESC LIMIT 1`,
+       ORDER BY ts DESC, id DESC LIMIT 1`,
     )
     .get(widgetId) as { id: number } | undefined;
   return row?.id ?? null;
@@ -263,7 +266,7 @@ export function recentSnapshots(widgetId: string, limit = 50): Array<{
   const rows = getDb()
     .prepare(
       `SELECT value_json, anomaly_flag, ts FROM snapshots
-       WHERE widget_id = ? ORDER BY ts DESC LIMIT ?`,
+       WHERE widget_id = ? ORDER BY ts DESC, id DESC LIMIT ?`,
     )
     .all(widgetId, limit) as Array<{
     value_json: string;
@@ -460,7 +463,7 @@ export function markLatestSnapshotAnomaly(
        SET anomaly_flag = ?, anomaly_explanation = ?
        WHERE id = (
          SELECT id FROM snapshots WHERE widget_id = ?
-         ORDER BY ts DESC LIMIT 1
+         ORDER BY ts DESC, id DESC LIMIT 1
        )`,
     )
     .run(flag ? 1 : 0, explanation, widgetId);

@@ -171,6 +171,52 @@ describe("GET /data-sources", () => {
   });
 });
 
+describe("GET /widgets/:id/state", () => {
+  it("returns widget definition + history + investigations", async () => {
+    const dash = createDashboard({ name: "D", themeId: "default" });
+    const src = createDataSource({
+      name: "S",
+      type: "rest",
+      url: "https://example.com",
+      method: "GET",
+      pollIntervalSec: 60,
+    });
+    const { createWidget, writeSnapshot } = await import("../db/repo.js");
+    const widget = createWidget({
+      dashboardId: dash.id,
+      sourceId: src.id,
+      type: "number",
+      title: "X",
+      transformExpr: "value",
+      position: 0,
+    });
+    writeSnapshot({ widgetId: widget.id, value: 1 });
+    writeSnapshot({ widgetId: widget.id, value: 2 });
+    writeSnapshot({ widgetId: widget.id, value: 3 });
+
+    const res = await req("GET", `/widgets/${widget.id}/state`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      widget: { id: string };
+      latest: { value: unknown } | null;
+      history: Array<{ value: unknown }>;
+      investigations: Array<unknown>;
+    };
+    expect(body.widget.id).toBe(widget.id);
+    expect(body.latest?.value).toBe(3);
+    expect(body.history.length).toBeGreaterThanOrEqual(3);
+    // Oldest → newest order.
+    expect(body.history[0]?.value).toBe(1);
+    expect(body.history[body.history.length - 1]?.value).toBe(3);
+    expect(body.investigations).toEqual([]);
+  });
+
+  it("404s when widget does not exist", async () => {
+    const res = await req("GET", "/widgets/nope/state");
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("POST + GET /dashboards/:id/widgets", () => {
   it("adds a widget and lists it", async () => {
     const dash = createDashboard({ name: "D", themeId: "default" });
