@@ -62,7 +62,10 @@ final class SharedStoreTests: XCTestCase {
                     value: SnapshotValue(raw: .number(18420)),
                     anomaly: false,
                     anomalyExplanation: nil,
-                    ts: "2026-04-23T12:00:00Z"
+                    ts: "2026-04-23T12:00:00Z",
+                    history: nil,
+                    investigationId: nil,
+                    investigationStatus: nil
                 )
             ]
         )

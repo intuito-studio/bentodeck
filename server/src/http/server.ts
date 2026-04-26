@@ -5,8 +5,10 @@ import {
   getTheme,
   latestSnapshot,
   listDashboards,
+  listInvestigationsForWidget,
   listThemes,
   listWidgetsForDashboard,
+  recentSnapshots,
 } from "../db/repo.js";
 import { createMockApi } from "../demo/mock-api.js";
 import { log } from "../logger.js";
@@ -50,6 +52,22 @@ export function buildHttpApp(): Hono {
 
     const widgets = listWidgetsForDashboard(dashboardId).map((w) => {
       const snap = latestSnapshot(w.id);
+      // Trailing numeric history so iOS can render sparklines + trend arrows.
+      // Cheap query (indexed by widget_id+ts), capped at 24 points.
+      const recent = recentSnapshots(w.id, 24);
+      const numericHistory: number[] = [];
+      // recent is newest→oldest; reverse for chronological order.
+      for (const s of recent.slice().reverse()) {
+        if (typeof s.value === "number" && Number.isFinite(s.value)) {
+          numericHistory.push(s.value);
+        } else if (typeof s.value === "string") {
+          const n = Number(s.value);
+          if (Number.isFinite(n)) numericHistory.push(n);
+        }
+      }
+      // Quick "is there a still-pending or recent investigation?" hint.
+      const investigations = listInvestigationsForWidget(w.id, 1);
+      const investigation = investigations[0] ?? null;
       return {
         id: w.id,
         title: w.title,
@@ -59,6 +77,9 @@ export function buildHttpApp(): Hono {
         anomaly: snap?.anomalyFlag ?? false,
         anomalyExplanation: snap?.anomalyExplanation ?? null,
         ts: snap?.ts ?? null,
+        history: numericHistory,
+        investigationId: investigation?.id ?? null,
+        investigationStatus: investigation?.status ?? null,
       };
     });
 

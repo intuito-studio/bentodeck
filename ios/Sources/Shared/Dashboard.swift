@@ -30,6 +30,12 @@ struct SnapshotWidget: Codable, Identifiable, Hashable {
     let anomaly: Bool
     let anomalyExplanation: String?
     let ts: String?
+    /// Trailing numeric history (chronological, oldest → newest) for sparkline
+    /// + trend rendering. Empty for non-numeric widgets. Server caps at 24.
+    let history: [Double]?
+    /// id of the latest investigation associated with this widget, if any.
+    let investigationId: String?
+    let investigationStatus: String?
 }
 
 /// Widget type enum that is string-tolerant — if the server adds a new type

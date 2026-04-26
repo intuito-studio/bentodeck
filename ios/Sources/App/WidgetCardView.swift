@@ -45,6 +45,10 @@ struct WidgetCardView: View {
             listBody
         case .status:
             statusBody
+        case .sparkline:
+            sparklineBody
+        case .number_with_trend:
+            numberWithTrendBody
         default:
             numberBody
         }
@@ -56,6 +60,56 @@ struct WidgetCardView: View {
             .foregroundStyle(Color(hex: theme.colors.primary))
             .minimumScaleFactor(0.5)
             .lineLimit(1)
+    }
+
+    private var numberWithTrendBody: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(widget.value?.displayString ?? "—")
+                    .font(theme.primaryFont(size: 30))
+                    .foregroundStyle(Color(hex: theme.colors.primary))
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                TrendBadge(
+                    history: widget.history ?? [],
+                    positive: Color(hex: theme.colors.positive),
+                    negative: Color(hex: theme.colors.negative),
+                    neutral: Color(hex: theme.colors.secondary)
+                )
+            }
+            if let history = widget.history, history.count >= 2 {
+                Sparkline(
+                    values: history,
+                    stroke: Color(hex: theme.chart.stroke),
+                    fillStart: Color(hex: theme.chart.fillStart),
+                    fillEnd: Color(hex: theme.chart.fillEnd)
+                )
+                .frame(height: 22)
+            }
+        }
+    }
+
+    private var sparklineBody: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(widget.value?.displayString ?? "—")
+                .font(theme.primaryFont(size: 24))
+                .foregroundStyle(Color(hex: theme.colors.primary))
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+            if let history = widget.history, history.count >= 2 {
+                Sparkline(
+                    values: history,
+                    stroke: Color(hex: theme.chart.stroke),
+                    fillStart: Color(hex: theme.chart.fillStart),
+                    fillEnd: Color(hex: theme.chart.fillEnd)
+                )
+                .frame(height: 38)
+            } else {
+                Text("Collecting data…")
+                    .font(theme.secondaryFont(size: 11))
+                    .foregroundStyle(Color(hex: theme.colors.secondary))
+            }
+        }
     }
 
     private var listBody: some View {

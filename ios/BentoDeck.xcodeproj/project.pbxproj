@@ -14,10 +14,12 @@
 		350B2A7D171A6E29C79CFA27 /* JSONValueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF02746382B308D8C8BDC49A /* JSONValueTests.swift */; };
 		39A1FA2D3E47E502B7263487 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C0CEF7AF390D1D6180D97F /* Config.swift */; };
 		4043023EC2A63DAFBED5D2FA /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6652D4E97E4CA868E7281012 /* SharedStore.swift */; };
+		4EFFC22710DE065113C25D38 /* Sparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1391BD1F68F6CA4AD060043F /* Sparkline.swift */; };
 		5819DB590D4C8CCCE03E325C /* DashboardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0872674FF04EB1399B575B /* DashboardListView.swift */; };
 		6B4ED0D8EB46AECFF66A014D /* SnapshotResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003DA0D8F4D0D76EDC1F4F23 /* SnapshotResponseTests.swift */; };
 		6D44645F9230F24F62132C30 /* SnapshotValueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8930EEF19F01EC6BF63AE76 /* SnapshotValueTests.swift */; };
 		703638ED7FA8934919A8BA99 /* WidgetCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108C73115A730D83FBB2E827 /* WidgetCardView.swift */; };
+		74371F857CDCE4671F667048 /* Sparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1391BD1F68F6CA4AD060043F /* Sparkline.swift */; };
 		7C2D1C8A1F3C4716AE765CEB /* Provider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EC9D8FB8A885F9036C13B4 /* Provider.swift */; };
 		8368A8121912B05B7E7DC9F0 /* WidgetTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBEE93697804A93AFBE9CCE5 /* WidgetTypeTests.swift */; };
 		8C342234DAC6D520428D20BC /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6652D4E97E4CA868E7281012 /* SharedStore.swift */; };
@@ -74,6 +76,7 @@
 		07EC9D8FB8A885F9036C13B4 /* Provider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Provider.swift; sourceTree = "<group>"; };
 		0C0872674FF04EB1399B575B /* DashboardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardListView.swift; sourceTree = "<group>"; };
 		108C73115A730D83FBB2E827 /* WidgetCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCardView.swift; sourceTree = "<group>"; };
+		1391BD1F68F6CA4AD060043F /* Sparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sparkline.swift; sourceTree = "<group>"; };
 		1C1B45115084E044505DD862 /* SharedStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStoreTests.swift; sourceTree = "<group>"; };
 		6652D4E97E4CA868E7281012 /* SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStore.swift; sourceTree = "<group>"; };
 		686F22EACFE0372400DF478A /* BentoDeckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDeckApp.swift; sourceTree = "<group>"; };
@@ -82,9 +85,9 @@
 		9041D7284BA9E60806816FA4 /* HomeWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidget.swift; sourceTree = "<group>"; };
 		9B7D1F823812304C825523D4 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B5472249BA7F461F6B63D61A /* BentoDeckTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BentoDeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BentoDeckWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B72579DB00A0D470C65A2D16 /* BentoDeckWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BentoDeckWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B8E9E95EC7DC7745255B48CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B9EA693CD52325641C144569 /* BentoDeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BentoDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B9EA693CD52325641C144569 /* BentoDeck.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BentoDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF02746382B308D8C8BDC49A /* JSONValueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValueTests.swift; sourceTree = "<group>"; };
 		C6E2078DF2D525B54FE32C99 /* BentoDeckWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BentoDeckWidgetBundle.swift; sourceTree = "<group>"; };
 		C7250406F0CE2EE6D9B1A60F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -151,6 +154,7 @@
 				76C0CEF7AF390D1D6180D97F /* Config.swift */,
 				0631E05A0153DF5C1D6D0EBB /* Dashboard.swift */,
 				6652D4E97E4CA868E7281012 /* SharedStore.swift */,
+				1391BD1F68F6CA4AD060043F /* Sparkline.swift */,
 				C7250406F0CE2EE6D9B1A60F /* Theme.swift */,
 			);
 			path = Shared;
@@ -248,6 +252,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					975D603E904453AF949F207F = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					C605573875F57C67112E22F0 = {
@@ -255,6 +260,7 @@
 						ProvisioningStyle = Automatic;
 					};
 					FE719512D79C8FDBC1965A22 = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -318,6 +324,7 @@
 				C7093604EC399197510DDA8E /* RefreshManager.swift in Sources */,
 				94912C7D66C3FDAF07FFED5A /* RootView.swift in Sources */,
 				8C342234DAC6D520428D20BC /* SharedStore.swift in Sources */,
+				74371F857CDCE4671F667048 /* Sparkline.swift in Sources */,
 				FAB6D553CAA0468DCB9EC063 /* Theme.swift in Sources */,
 				703638ED7FA8934919A8BA99 /* WidgetCardView.swift in Sources */,
 			);
@@ -335,6 +342,7 @@
 				E40CF7B52A18853611FDA9CA /* LockWidget.swift in Sources */,
 				7C2D1C8A1F3C4716AE765CEB /* Provider.swift in Sources */,
 				4043023EC2A63DAFBED5D2FA /* SharedStore.swift in Sources */,
+				4EFFC22710DE065113C25D38 /* Sparkline.swift in Sources */,
 				0291D9EB147F2289FCFD85C0 /* Theme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -430,7 +438,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = BentoDeck.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -450,7 +457,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BentoDeckWidget.entitlements;
-				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -467,7 +473,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BentoDeckWidget.entitlements;
-				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -564,7 +569,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = BentoDeck.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 32S63F3Z2K;
 				INFOPLIST_FILE = Sources/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
