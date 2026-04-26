@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockApi } from "./mock-api.js";
+import { withFreshDbAndThemes } from "../test-utils.js";
+import {
+  createDashboard,
+  createDataSource,
+  createWidget,
+  getInvestigation,
+  listInvestigationsForWidget,
+} from "../db/repo.js";
 
 // Tests for the demo mock API. Note: importing this module starts a
 // module-scope setInterval that drifts the mutable state every 3s (unref'd,
@@ -87,5 +95,101 @@ describe("demo mock-api", () => {
     expect(typeof body.signupsToday).toBe("number");
     expect(typeof body.errorsCritical).toBe("number");
     expect(typeof body.uptimeSec).toBe("number");
+  });
+});
+
+describe("demo investigation seeder", () => {
+  let cleanup: () => void = () => {};
+  let widgetId = "";
+
+  beforeEach(() => {
+    ({ cleanup } = withFreshDbAndThemes());
+    const dash = createDashboard({ name: "D", themeId: "default" });
+    const src = createDataSource({
+      name: "S",
+      type: "rest",
+      url: "http://example.com",
+      method: "GET",
+      pollIntervalSec: 60,
+    });
+    const w = createWidget({
+      dashboardId: dash.id,
+      sourceId: src.id,
+      type: "number",
+      title: "Critical errors",
+      transformExpr: "count",
+      position: 0,
+    });
+    widgetId = w.id;
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
+
+  it("seeds an investigation for a target widget and streams the report through to done", async () => {
+    const app = createMockApi();
+    const res = await app.fetch(
+      new Request("http://x/control/seed-investigation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ widgetId }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      ok: boolean;
+      investigationId: string;
+      widgetId: string;
+    };
+    expect(body.ok).toBe(true);
+    expect(body.widgetId).toBe(widgetId);
+
+    // Immediately after the call, status should be 'running' and report
+    // should already contain the headline (part 1).
+    const t0 = getInvestigation(body.investigationId)!;
+    expect(t0.status).toBe("running");
+    expect(t0.report).toContain("Critical errors spiked");
+    expect(t0.title).toContain("Critical errors spiked");
+
+    // Advance fake timers; the seeder uses two setTimeouts at 1500ms and
+    // 3500ms. After 4s of fake time we should be done.
+    await vi.advanceTimersByTimeAsync(4000);
+    const t2 = getInvestigation(body.investigationId)!;
+    expect(t2.status).toBe("done");
+    expect(t2.report).toContain("What to check first");
+    expect(t2.report).toContain("Blast radius");
+    expect(t2.completedAt).not.toBeNull();
+  });
+
+  it("auto-picks the first errors-shaped widget when widgetId is omitted", async () => {
+    const app = createMockApi();
+    const res = await app.fetch(
+      new Request("http://x/control/seed-investigation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+    );
+    const body = (await res.json()) as { widgetId: string };
+    expect(body.widgetId).toBe(widgetId); // there's only the one
+    const list = listInvestigationsForWidget(widgetId);
+    expect(list).toHaveLength(1);
+  });
+
+  it("404s when there are no widgets to attach to", async () => {
+    cleanup();
+    ({ cleanup } = withFreshDbAndThemes()); // fresh DB, no widgets
+    const app = createMockApi();
+    const res = await app.fetch(
+      new Request("http://x/control/seed-investigation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+    );
+    expect(res.status).toBe(404);
   });
 });

@@ -17,6 +17,7 @@
     "seed-demo": "tsx scripts/seed-demo.ts",
     "demo:spike": "curl -sS -XPOST http://localhost:3737/demo/control/spike && echo",
     "demo:reset": "curl -sS -XPOST http://localhost:3737/demo/control/reset && echo",
+    "demo:seed-investigation": "curl -sS -XPOST -H 'Content-Type: application/json' -d '{}' http://localhost:3737/demo/control/seed-investigation && echo",
     "test": "vitest run",
     "test:watch": "vitest"
   },
