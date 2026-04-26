@@ -4,6 +4,11 @@ import PhotosUI
 
 struct DashboardDetailView: View {
     let dashboardId: String
+    /// Whether this carousel page is the one currently in view. LazyHStack
+    /// keeps adjacent pages mounted, and each one would otherwise contribute
+    /// its toolbar items — so two ellipsis menus would appear in the nav
+    /// bar at the same time. Only the active page registers its toolbar.
+    var isActive: Bool = true
     @State private var snapshot: SnapshotResponse?
     @State private var isLoading = false
     @State private var errorText: String?
@@ -13,8 +18,9 @@ struct DashboardDetailView: View {
     @State private var photoPickerItem: PhotosPickerItem?
     @StateObject private var layoutModel: BentoLayoutModel
 
-    init(dashboardId: String) {
+    init(dashboardId: String, isActive: Bool = true) {
         self.dashboardId = dashboardId
+        self.isActive = isActive
         _layoutModel = StateObject(wrappedValue: BentoLayoutModel(dashboardId: dashboardId))
     }
 
@@ -50,7 +56,9 @@ struct DashboardDetailView: View {
         }
         .refreshable { await reload() }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { toolbarTrailing }
+            if isActive {
+                ToolbarItem(placement: .topBarTrailing) { toolbarTrailing }
+            }
         }
         .navigationDestination(item: $selectedInvestigation) { selection in
             InvestigationDetailView(

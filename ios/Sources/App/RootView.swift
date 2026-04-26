@@ -48,55 +48,74 @@ struct RootView: View {
     @State private var scrolledPage: Int? = 1
 
     private var carousel: some View {
+        GeometryReader { geo in
+            carouselBody(size: geo.size)
+        }
+    }
+
+    @ViewBuilder
+    private func carouselBody(size: CGSize) -> some View {
         // Triple-buffer: [last, ...real, first]. After a swipe lands on a
         // duplicate edge, snap (without animation) to the equivalent real
         // index — looks identical, lets the user keep swiping.
         let pages = [dashboards.last!] + dashboards + [dashboards.first!]
         let n = dashboards.count
-        return GeometryReader { geo in
-            ZStack(alignment: .bottom) {
-                SharedBackgroundView(dashboardId: currentVisibleDashboardId)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 0) {
-                        ForEach(pages.indices, id: \.self) { idx in
-                            DashboardDetailView(dashboardId: pages[idx].id)
-                                .frame(width: geo.size.width, height: geo.size.height)
-                                .id(idx)
-                        }
-                    }
-                    .scrollTargetLayout()
-                }
-                .scrollTargetBehavior(.paging)
-                .scrollPosition(id: $scrolledPage, anchor: .center)
-                .onChange(of: scrolledPage) { _, newIdx in
-                    guard let newIdx else { return }
-                    pageIndex = newIdx
-
-                    if n > 1, newIdx == 0 {
-                        snapScroll(to: n)
-                    } else if n > 1, newIdx == n + 1 {
-                        snapScroll(to: 1)
-                    }
-
-                    let realIdx = realIndex(forPage: newIdx)
-                    if realIdx >= 0, realIdx < dashboards.count {
-                        pinIfNeeded(dashboards[realIdx].id)
-                    }
-                }
-                .onAppear { scrolledPage = pageIndex }
-                .onChange(of: pageIndex) { _, newIdx in
-                    // External page changes (e.g. deep links) sync into the
-                    // scroll position; no animation so it lands instantly.
-                    if scrolledPage != newIdx {
-                        var t = Transaction(); t.disablesAnimations = true
-                        withTransaction(t) { scrolledPage = newIdx }
-                    }
-                }
-
-                pageIndicator(count: n, page: realIndex(forPage: pageIndex))
-                    .padding(.bottom, 6)
-            }
+        ZStack(alignment: .bottom) {
+            SharedBackgroundView(dashboardId: currentVisibleDashboardId)
+            scrollLayer(pages: pages, n: n, size: size)
+            pageIndicator(count: n, page: realIndex(forPage: pageIndex))
+                .padding(.bottom, 6)
         }
+    }
+
+    @ViewBuilder
+    private func scrollLayer(pages: [DashboardSummary], n: Int, size: CGSize) -> some View {
+        let scroll = ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 0) {
+                ForEach(pages.indices, id: \.self) { idx in
+                    DashboardDetailView(
+                        dashboardId: pages[idx].id,
+                        isActive: idx == pageIndex
+                    )
+                    .frame(width: size.width, height: size.height)
+                    .id(idx)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        scroll
+            .scrollTargetBehavior(.paging)
+            .scrollPosition(id: $scrolledPage, anchor: .center)
+            .onAppear { scrolledPage = pageIndex }
+            .onChange(of: scrolledPage) { _, newIdx in
+                handleScrollChanged(newIdx)
+            }
+            .onChange(of: pageIndex) { _, newIdx in
+                syncScrollToPage(newIdx)
+            }
+    }
+
+    private func handleScrollChanged(_ newIdx: Int?) {
+        guard let newIdx else { return }
+        let n = dashboards.count
+        pageIndex = newIdx
+        if n > 1, newIdx == 0 {
+            snapScroll(to: n)
+        } else if n > 1, newIdx == n + 1 {
+            snapScroll(to: 1)
+        }
+        let realIdx = realIndex(forPage: newIdx)
+        if realIdx >= 0, realIdx < dashboards.count {
+            pinIfNeeded(dashboards[realIdx].id)
+        }
+    }
+
+    private func syncScrollToPage(_ newIdx: Int) {
+        // External page changes (e.g. deep links) sync into the scroll
+        // position with no animation so they land instantly.
+        guard scrolledPage != newIdx else { return }
+        var t = Transaction(); t.disablesAnimations = true
+        withTransaction(t) { scrolledPage = newIdx }
     }
 
     /// Move the ScrollView's position without animating it — used for the
