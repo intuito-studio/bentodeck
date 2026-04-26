@@ -83,9 +83,27 @@ struct RootView: View {
         do {
             let list = try await APIClient().fetchDashboards()
             dashboards = list
+            // Write the summary list so the focus widget's AppIntent picker
+            // can enumerate dashboards without having to call the backend
+            // itself (widget network access is unreliable).
+            SharedStore.shared.saveDashboards(list)
             if selectedDashboardId == nil {
                 selectedDashboardId = SharedStore.shared.pinnedDashboardId ?? list.first?.id
             }
+            // Best-effort: prefetch each dashboard's snapshot in parallel and
+            // mirror it into the per-dashboard slot. Failures here are
+            // silently dropped — the picker simply won't show widgets for
+            // dashboards that haven't loaded yet.
+            await withTaskGroup(of: Void.self) { group in
+                for dash in list {
+                    group.addTask {
+                        if let snap = try? await APIClient().fetchSnapshot(dashboardId: dash.id) {
+                            SharedStore.shared.saveSnapshot(snap, forDashboard: dash.id)
+                        }
+                    }
+                }
+            }
+            WidgetCenter.shared.reloadAllTimelines()
         } catch {
             errorText = error.localizedDescription
         }

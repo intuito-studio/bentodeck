@@ -26,6 +26,8 @@ struct SharedStore {
     private let lastSnapshotKey = "latest-snapshot-payload"
     private let pinnedDashboardIdKey = "pinned-dashboard-id"
     private let layoutStateKeyPrefix = "dashboard-layout-"
+    private let dashboardsListKey = "all-dashboards"
+    private let perDashboardSnapshotKeyPrefix = "snapshot-"
 
     init() {
         self.defaults = UserDefaults(suiteName: Config.appGroupID)
@@ -43,6 +45,9 @@ struct SharedStore {
         guard let defaults, let data = try? JSONEncoder().encode(snapshot) else { return }
         defaults.set(data, forKey: lastSnapshotKey)
         defaults.set(Date(), forKey: lastSnapshotKey + "-at")
+        // Mirror to the per-dashboard slot so the focus widget's picker has
+        // up-to-date data without forcing a separate fetch path.
+        saveSnapshot(snapshot, forDashboard: snapshot.dashboardId)
     }
 
     func loadSnapshot() -> (snapshot: SnapshotResponse, at: Date)? {
@@ -53,6 +58,46 @@ struct SharedStore {
         }
         let at = defaults.object(forKey: lastSnapshotKey + "-at") as? Date ?? Date()
         return (snap, at)
+    }
+
+    // MARK: - All dashboards (for the focus widget's picker)
+
+    /// Save the lightweight list of dashboards the user has on this device.
+    /// Used by the focus widget's AppIntent picker to enumerate options.
+    func saveDashboards(_ dashboards: [DashboardSummary]) {
+        guard let defaults, let data = try? JSONEncoder().encode(dashboards) else { return }
+        defaults.set(data, forKey: dashboardsListKey)
+    }
+
+    func loadDashboards() -> [DashboardSummary] {
+        guard let defaults,
+              let data = defaults.data(forKey: dashboardsListKey),
+              let list = try? JSONDecoder().decode([DashboardSummary].self, from: data) else {
+            return []
+        }
+        return list
+    }
+
+    /// Per-dashboard snapshot slot. The focus widget reads from here when the
+    /// user has picked a specific dashboard in the configuration.
+    func saveSnapshot(_ snapshot: SnapshotResponse, forDashboard dashboardId: String) {
+        guard let defaults, let data = try? JSONEncoder().encode(snapshot) else { return }
+        defaults.set(data, forKey: perDashboardSnapshotKey(dashboardId))
+        defaults.set(Date(), forKey: perDashboardSnapshotKey(dashboardId) + "-at")
+    }
+
+    func loadSnapshot(forDashboard dashboardId: String) -> (snapshot: SnapshotResponse, at: Date)? {
+        guard let defaults,
+              let data = defaults.data(forKey: perDashboardSnapshotKey(dashboardId)),
+              let snap = try? JSONDecoder().decode(SnapshotResponse.self, from: data) else {
+            return nil
+        }
+        let at = defaults.object(forKey: perDashboardSnapshotKey(dashboardId) + "-at") as? Date ?? Date()
+        return (snap, at)
+    }
+
+    private func perDashboardSnapshotKey(_ dashboardId: String) -> String {
+        perDashboardSnapshotKeyPrefix + dashboardId
     }
 
     // MARK: - Per-dashboard layout state

@@ -5,6 +5,7 @@ import WidgetKit
 struct BentoDeckWidgetBundle: WidgetBundle {
     var body: some Widget {
         HomeWidget()
+        FocusWidget()
         LockWidget()
         AnomalyLiveActivity()
     }
