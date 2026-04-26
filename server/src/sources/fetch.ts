@@ -18,10 +18,25 @@ export async function fetchFromSource(source: DataSource): Promise<FetchResult> 
     headers[source.authHeaderKey] = source.authHeaderValue;
   }
 
-  const res = await fetch(source.url, {
-    method: source.method,
-    headers,
-  });
+  // Defensive: a connect-refused / DNS-failure / timeout from `fetch` throws.
+  // We need a structured failure here so the poller and the route layer can
+  // route the user to a sensible error message instead of a 500.
+  let res: Response;
+  try {
+    res = await fetch(source.url, {
+      method: source.method,
+      headers,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      status: 0,
+      body: null,
+      bodyText: `network error: ${message}`,
+      headers: {},
+    };
+  }
 
   const bodyText = await res.text();
   let body: unknown = bodyText;

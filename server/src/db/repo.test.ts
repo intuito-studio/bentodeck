@@ -14,10 +14,12 @@ import {
   listWidgetsForDashboard,
   markLatestSnapshotAnomaly,
   recentSnapshots,
+  restoreNeedsKey,
   saveLastSample,
   saveTheme,
   seedPresetThemes,
   setDashboardTheme,
+  setDataSourceKey,
   writeSnapshot,
 } from "./repo.js";
 import { PRESET_THEMES } from "../themes/presets.js";
@@ -150,6 +152,88 @@ describe("data_sources repo", () => {
       pollIntervalSec: 60,
     });
     expect(getDataSource(s.id)!.headers).toBeUndefined();
+  });
+
+  it("createDataSource defaults needsKey to false when omitted", () => {
+    const s = createDataSource({
+      name: "default-needs-key",
+      type: "rest",
+      url: "https://example.com",
+      method: "GET",
+      pollIntervalSec: 60,
+    });
+    expect(getDataSource(s.id)!.needsKey).toBe(false);
+  });
+
+  it("createDataSource persists needsKey=true", () => {
+    const s = createDataSource({
+      name: "vercel",
+      type: "rest",
+      url: "https://api.vercel.com/v6/deployments",
+      method: "GET",
+      authHeaderKey: "Authorization",
+      authHeaderValue: "Bearer {{API_KEY}}",
+      pollIntervalSec: 60,
+      needsKey: true,
+    });
+    const fetched = getDataSource(s.id)!;
+    expect(fetched.needsKey).toBe(true);
+    // Template is preserved verbatim until the user supplies a key.
+    expect(fetched.authHeaderValue).toBe("Bearer {{API_KEY}}");
+  });
+
+  it("setDataSourceKey substitutes {{API_KEY}} and clears needsKey", () => {
+    const s = createDataSource({
+      name: "vercel",
+      type: "rest",
+      url: "https://api.vercel.com/v6/deployments",
+      method: "GET",
+      authHeaderKey: "Authorization",
+      authHeaderValue: "Bearer {{API_KEY}}",
+      pollIntervalSec: 60,
+      needsKey: true,
+    });
+    const updated = setDataSourceKey(s.id, "vrl_secret_abc123");
+    expect(updated).not.toBeNull();
+    expect(updated!.needsKey).toBe(false);
+    expect(updated!.authHeaderValue).toBe("Bearer vrl_secret_abc123");
+  });
+
+  it("setDataSourceKey falls back to Bearer when no template stored", () => {
+    // Edge case: discoverer gave us the auth_header_key but not a template.
+    // Substitution should still produce a working Bearer header.
+    const s = createDataSource({
+      name: "edge",
+      type: "rest",
+      url: "https://api.example.com/v1/me",
+      method: "GET",
+      authHeaderKey: "Authorization",
+      authHeaderValue: undefined,
+      pollIntervalSec: 60,
+      needsKey: true,
+    });
+    const updated = setDataSourceKey(s.id, "xyz");
+    expect(updated!.authHeaderValue).toBe("Bearer xyz");
+    expect(updated!.needsKey).toBe(false);
+  });
+
+  it("setDataSourceKey on a missing source returns null", () => {
+    expect(setDataSourceKey("does-not-exist", "anything")).toBeNull();
+  });
+
+  it("restoreNeedsKey rolls back to {{API_KEY}} state", () => {
+    const s = createDataSource({
+      name: "rollback",
+      type: "rest",
+      url: "https://api.example.com",
+      method: "GET",
+      authHeaderKey: "Authorization",
+      authHeaderValue: "Bearer hot_key",
+      pollIntervalSec: 60,
+    });
+    const restored = restoreNeedsKey(s.id, "Bearer {{API_KEY}}");
+    expect(restored!.needsKey).toBe(true);
+    expect(restored!.authHeaderValue).toBe("Bearer {{API_KEY}}");
   });
 });
 

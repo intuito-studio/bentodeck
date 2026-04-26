@@ -171,6 +171,50 @@ describe("GET /data-sources", () => {
   });
 });
 
+describe("POST /data-sources/:id/key", () => {
+  it("returns 404 when the source doesn't exist", async () => {
+    const res = await req("POST", "/data-sources/missing/key", {
+      apiKey: "x",
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("rolls back to needsKey=true when verification fails", async () => {
+    // Point at an unroutable port so fetchFromSource returns ok=false
+    // without doing any real network. This proves: route accepts the key,
+    // calls fetchFromSource, sees a non-2xx, restores the {{API_KEY}}
+    // template, and reports failure to the iOS client.
+    const src = createDataSource({
+      name: "broken",
+      type: "rest",
+      url: "http://127.0.0.1:1/never-routes",
+      method: "GET",
+      authHeaderKey: "Authorization",
+      authHeaderValue: "Bearer {{API_KEY}}",
+      pollIntervalSec: 60,
+      needsKey: true,
+    });
+
+    const res = await req("POST", `/data-sources/${src.id}/key`, {
+      apiKey: "trying-this-key",
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; status?: number };
+    expect(body.ok).toBe(false);
+
+    // Source should be back to needsKey=true with the original template.
+    const listRes = await req("GET", "/data-sources");
+    const list = (await listRes.json()) as {
+      sources: Array<{ id: string; needsKey: boolean; authHeaderValue?: string }>;
+    };
+    const after = list.sources.find((s) => s.id === src.id)!;
+    expect(after.needsKey).toBe(true);
+    // authHeaderValue is redacted in GET /data-sources, so just check the
+    // needsKey flag + that the row still exists. The repo-level test
+    // covers the actual restored value.
+  });
+});
+
 describe("GET /widgets/:id/state", () => {
   it("returns widget definition + history + investigations", async () => {
     const dash = createDashboard({ name: "D", themeId: "default" });

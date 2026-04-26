@@ -139,6 +139,10 @@ export type DiscoveryResult =
       source: DataSource;
       spec: SourceSpec;
       sampleBodyPreview: string;
+      // True when the source requires auth and the user didn't supply a
+      // key. The source is persisted with needs_key=1; verification was
+      // skipped. The iOS app must prompt for the key.
+      needsKey?: boolean;
     }
   | {
       ok: false;
@@ -222,6 +226,36 @@ export async function discoverDataSource(args: {
   log.info(
     `[discover] proposal: ${spec.method} ${spec.url} authKey=${spec.authHeaderKey ?? "—"} reason="${spec.reasoning ?? ""}"`,
   );
+
+  // "Needs-key" path: the spec requires auth but the user didn't supply
+  // a key. Persist the template verbatim (with {{API_KEY}}) and flip
+  // needs_key=true. Skip verification — there's nothing to verify yet.
+  // The iOS app will prompt for the key, then POST /data-sources/:id/key.
+  const requiresAuth = !!spec.authHeaderKey;
+  if (requiresAuth && !args.apiKey) {
+    const source = createDataSource({
+      name: args.name ?? new URL(spec.url).hostname,
+      type: "rest",
+      url: spec.url,
+      method: spec.method,
+      headers: spec.headers,
+      authHeaderKey: spec.authHeaderKey,
+      authHeaderValue: spec.authHeaderValue,
+      pollIntervalSec: spec.pollIntervalSec,
+      needsKey: true,
+    });
+    log.info(
+      `[discover] persisted needs-key source=${source.id} (awaiting user key)`,
+    );
+    return {
+      ok: true,
+      source,
+      spec,
+      sampleBodyPreview:
+        "(awaiting API key; sample will be captured on first successful poll)",
+      needsKey: true,
+    };
+  }
 
   // Substitute the user's API key into the auth header value template.
   const authHeaderValue =

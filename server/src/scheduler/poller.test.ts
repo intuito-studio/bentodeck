@@ -79,6 +79,38 @@ describe("poll loop", () => {
     expect(sample).toEqual({ metrics: { count: 1234 } });
   });
 
+  it("skips sources flagged needsKey (no snapshot is written)", async () => {
+    // Mirror the "discovered from docs but waiting on user's API key"
+    // state — the poller must NOT hit the endpoint at all, because the
+    // call would just 401 and burn rate limit. The widget shows a
+    // "Connect" warning in the iOS app instead.
+    const dash = createDashboard({ name: "Locked", themeId: "default" });
+    const src = createDataSource({
+      name: "needs-key",
+      type: "rest",
+      url: `${baseUrl}/data`,
+      method: "GET",
+      authHeaderKey: "Authorization",
+      authHeaderValue: "Bearer {{API_KEY}}",
+      pollIntervalSec: 1,
+      needsKey: true,
+    });
+    const widget = createWidget({
+      dashboardId: dash.id,
+      sourceId: src.id,
+      type: "number",
+      title: "Count",
+      transformExpr: "metrics.count",
+      position: 0,
+    });
+
+    await tickOnce();
+
+    expect(latestSnapshot(widget.id)).toBeNull();
+    // Source's last_sample_json should also be untouched.
+    expect(getDataSource(src.id)!.lastSampleJson).toBeNull();
+  });
+
   it("skips polling when no widgets are attached to the source", async () => {
     createDataSource({
       name: "lonely",

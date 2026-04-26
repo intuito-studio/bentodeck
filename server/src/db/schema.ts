@@ -24,6 +24,12 @@ const SCHEMA = `
     auth_header_value  TEXT,
     poll_interval_sec  INTEGER NOT NULL DEFAULT 60,
     last_sample_json   TEXT,
+    -- 1 when the source was registered without an API key (e.g. discovered
+    -- from docs and waiting on the user to paste their token in the iOS
+    -- app). The poller skips these. auth_header_value contains the
+    -- {{API_KEY}} template verbatim until the user supplies a key, at
+    -- which point we substitute and flip needs_key back to 0.
+    needs_key          INTEGER NOT NULL DEFAULT 0,
     created_at         TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -102,9 +108,29 @@ export function initDb(): Database.Database {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA);
+  applyMigrations(db);
   dbInstance = db;
   log.info(`SQLite initialized at ${dbPath}`);
   return db;
+}
+
+/// Idempotent column adds for existing dev databases that predate a column.
+/// Each step is wrapped in try/catch because better-sqlite3 throws on a
+/// duplicate-column add — that's the indicator the migration already ran.
+function applyMigrations(db: Database.Database): void {
+  const safeAdd = (sql: string): void => {
+    try {
+      db.exec(sql);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (!/duplicate column/i.test(msg)) {
+        log.warn(`migration skipped: ${msg}`);
+      }
+    }
+  };
+  safeAdd(
+    `ALTER TABLE data_sources ADD COLUMN needs_key INTEGER NOT NULL DEFAULT 0`,
+  );
 }
 
 export function getDb(): Database.Database {

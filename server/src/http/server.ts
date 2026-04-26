@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import {
   getDashboard,
+  getDataSource,
   getTheme,
   latestSnapshot,
   listDashboards,
@@ -68,6 +69,11 @@ export function buildHttpApp(): Hono {
       // Quick "is there a still-pending or recent investigation?" hint.
       const investigations = listInvestigationsForWidget(w.id, 1);
       const investigation = investigations[0] ?? null;
+      // The iOS app's "needs API key" warning flows from this. We expose
+      // the source id so the app can POST /data-sources/:id/key without
+      // a separate lookup, and the source name so the warning can read
+      // "Connect <name>" instead of a UUID.
+      const source = getDataSource(w.sourceId);
       return {
         id: w.id,
         title: w.title,
@@ -80,6 +86,9 @@ export function buildHttpApp(): Hono {
         history: numericHistory,
         investigationId: investigation?.id ?? null,
         investigationStatus: investigation?.status ?? null,
+        sourceId: w.sourceId,
+        sourceName: source?.name ?? null,
+        needsKey: source?.needsKey ?? false,
       };
     });
 

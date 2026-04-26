@@ -25,6 +25,11 @@ export const DataSourceInput = z.object({
   authHeaderKey: z.string().optional(),
   authHeaderValue: z.string().optional(),
   pollIntervalSec: z.number().int().positive().max(3600).default(60),
+  // True when the source was discovered from docs but the user hasn't
+  // supplied an API key yet. The poller skips these; the iOS app shows a
+  // "Connect" warning card and lets the user paste the key into a
+  // SecureField. Persisted to SQLite as data_sources.needs_key.
+  needsKey: z.boolean().optional(),
 });
 export type DataSourceInput = z.infer<typeof DataSourceInput>;
 

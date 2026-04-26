@@ -94,6 +94,12 @@ async function tick(): Promise<void> {
 
   const tasks: Promise<void>[] = [];
   for (const source of sources) {
+    // Sources discovered without an API key sit in a "needs_key" state
+    // until the user pastes their token in the iOS app. Don't poll them —
+    // we'd just hammer the API with 401s. Don't bump lastPolledAt either,
+    // so the source becomes due immediately when the key arrives.
+    if (source.needsKey) continue;
+
     const last = lastPolledAt.get(source.id) ?? 0;
     const dueAt = last + source.pollIntervalSec * 1000;
     if (now < dueAt) continue;

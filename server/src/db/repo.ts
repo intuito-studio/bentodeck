@@ -60,8 +60,8 @@ export function createDataSource(input: DataSourceInput): DataSource {
   const db = getDb();
   db.prepare(
     `INSERT INTO data_sources
-     (id, name, type, url, method, headers_json, auth_header_key, auth_header_value, poll_interval_sec)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     (id, name, type, url, method, headers_json, auth_header_key, auth_header_value, poll_interval_sec, needs_key)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     id,
     input.name,
@@ -72,6 +72,7 @@ export function createDataSource(input: DataSourceInput): DataSource {
     input.authHeaderKey ?? null,
     input.authHeaderValue ?? null,
     input.pollIntervalSec,
+    input.needsKey ? 1 : 0,
   );
   return getDataSource(id)!;
 }
@@ -87,6 +88,7 @@ type DataSourceRow = {
   auth_header_value: string | null;
   poll_interval_sec: number;
   last_sample_json: string | null;
+  needs_key: number;
   created_at: string;
 };
 
@@ -102,8 +104,55 @@ function rowToDataSource(r: DataSourceRow): DataSource {
     authHeaderValue: r.auth_header_value ?? undefined,
     pollIntervalSec: r.poll_interval_sec,
     lastSampleJson: r.last_sample_json,
+    needsKey: r.needs_key === 1,
     createdAt: r.created_at,
   };
+}
+
+/// Substitute the user's API key into the auth header value template that's
+/// been waiting in the data_sources row, and clear the needs_key flag.
+/// The auth_header_value column at this point still contains the literal
+/// "{{API_KEY}}" placeholder the discoverer emitted; we replace it in place.
+/// Returns the updated DataSource, or null if the source doesn't exist.
+export function setDataSourceKey(
+  id: string,
+  apiKey: string,
+): DataSource | null {
+  const existing = getDataSource(id);
+  if (!existing) return null;
+  const template = existing.authHeaderValue ?? "";
+  const substituted = template.includes("{{API_KEY}}")
+    ? template.replace("{{API_KEY}}", apiKey)
+    : // No placeholder in the template — fall back to a plain Bearer header
+      // so simple "this API just wants Authorization: Bearer <key>" cases
+      // still work even if the discoverer didn't emit a template.
+      `Bearer ${apiKey}`;
+  getDb()
+    .prepare(
+      `UPDATE data_sources
+       SET auth_header_value = ?, needs_key = 0
+       WHERE id = ?`,
+    )
+    .run(substituted, id);
+  return getDataSource(id);
+}
+
+/// Put a data source back into the "needs key" state with the given header
+/// value template. Used when a key the user supplied fails verification —
+/// we want them to be able to retry without re-running discovery.
+export function restoreNeedsKey(
+  id: string,
+  template: string,
+): DataSource | null {
+  if (!getDataSource(id)) return null;
+  getDb()
+    .prepare(
+      `UPDATE data_sources
+       SET auth_header_value = ?, needs_key = 1
+       WHERE id = ?`,
+    )
+    .run(template, id);
+  return getDataSource(id);
 }
 
 export function getDataSource(id: string): DataSource | null {

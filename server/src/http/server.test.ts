@@ -132,6 +132,60 @@ describe("HTTP server integration", () => {
     expect(body.widgets[0]!.ts).toBeTypeOf("string");
   });
 
+  it("/dashboards/:id/snapshot exposes needsKey + sourceId per widget", async () => {
+    const d = createDashboard({ name: "WithKey", themeId: "default" });
+    const sNeeds = createDataSource({
+      name: "vercel",
+      type: "rest",
+      url: "https://api.vercel.com/v6/deployments",
+      method: "GET",
+      authHeaderKey: "Authorization",
+      authHeaderValue: "Bearer {{API_KEY}}",
+      pollIntervalSec: 60,
+      needsKey: true,
+    });
+    const sOk = createDataSource({
+      name: "stripe",
+      type: "rest",
+      url: "https://example.com",
+      method: "GET",
+      pollIntervalSec: 60,
+    });
+    const wNeeds = createWidget({
+      dashboardId: d.id,
+      sourceId: sNeeds.id,
+      type: "number",
+      title: "Vercel deploys",
+      transformExpr: "deployments[0].state",
+      position: 0,
+    });
+    const wOk = createWidget({
+      dashboardId: d.id,
+      sourceId: sOk.id,
+      type: "number",
+      title: "MRR",
+      transformExpr: "mrr",
+      position: 1,
+    });
+
+    const { body } = (await getJson(`/dashboards/${d.id}/snapshot`)) as {
+      body: {
+        widgets: Array<{
+          id: string;
+          needsKey: boolean;
+          sourceId: string;
+          sourceName: string | null;
+        }>;
+      };
+    };
+    const byId = Object.fromEntries(body.widgets.map((w) => [w.id, w]));
+    expect(byId[wNeeds.id]!.needsKey).toBe(true);
+    expect(byId[wNeeds.id]!.sourceId).toBe(sNeeds.id);
+    expect(byId[wNeeds.id]!.sourceName).toBe("vercel");
+    expect(byId[wOk.id]!.needsKey).toBe(false);
+    expect(byId[wOk.id]!.sourceId).toBe(sOk.id);
+  });
+
   it("/dashboards/:id/snapshot falls back to default theme when theme missing", async () => {
     const d = createDashboard({
       name: "FallbackTheme",

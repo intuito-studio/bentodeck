@@ -21,9 +21,11 @@ import {
   listThemes,
   listWidgetsForDashboard,
   recentSnapshots,
+  restoreNeedsKey,
   saveLastSample,
   saveTheme,
   setDashboardTheme,
+  setDataSourceKey,
   writeSnapshot,
 } from "../db/repo.js";
 import { log } from "../logger.js";
@@ -186,6 +188,46 @@ export function buildRoutes(): Hono {
   app.get("/data-sources", (c) => {
     return c.json({ sources: listDataSources().map(redactSource) });
   });
+
+  // Set the API key for a data source that was registered via
+  // `discover_data_source` without one. Substitutes the key into the stored
+  // {{API_KEY}} template, makes a single verification call, and only flips
+  // needs_key=false when that call returns 2xx.
+  app.post(
+    "/data-sources/:id/key",
+    zValidator("json", z.object({ apiKey: z.string().min(1) })),
+    async (c) => {
+      const id = c.req.param("id");
+      const existing = getDataSource(id);
+      if (!existing) return c.json({ error: "not found" }, 404);
+      const { apiKey } = c.req.valid("json");
+
+      const updated = setDataSourceKey(id, apiKey);
+      if (!updated) return c.json({ error: "not found" }, 404);
+
+      // Verify by polling once. If auth still fails, restore the
+      // {{API_KEY}} template + needs_key=true so the user can retry.
+      const trial = await fetchFromSource(updated);
+      if (!trial.ok) {
+        log.warn(
+          `[data-sources] verify failed source=${id} status=${trial.status}; rolling back`,
+        );
+        const restoreTemplate =
+          existing.authHeaderValue ?? "Bearer {{API_KEY}}";
+        restoreNeedsKey(id, restoreTemplate);
+        return c.json(
+          {
+            ok: false,
+            status: trial.status,
+            bodyPreview: trial.bodyText.slice(0, 400),
+          },
+          200,
+        );
+      }
+      saveLastSample(id, JSON.stringify(trial.body));
+      return c.json({ ok: true, source: redactSource(updated) });
+    },
+  );
 
   // -------- widgets --------
 
