@@ -18,7 +18,7 @@ Two-tier AI: a fast Messages-API anomaly call for the wrist buzz; a long-running
 
 ## Links
 
-- **GitHub repo:** https://github.com/<TBD>/bentodeck
+- **GitHub repo:** https://github.com/intuito-studio/bentodeck
 - **Demo video:** https://<TBD> (3-minute, Loom or YouTube)
 - **Live domain (informational):** https://bentodeck.io
 
@@ -89,9 +89,38 @@ This is exactly what the Managed Agents blog post calls "decoupling the brain fr
 
 The whole project earns this. *Claude Desktop's output layer for Apple devices* is a category nobody named. We had to build the architecture before we knew what to call it. We pivoted twice in the first day — from "horizontal dashboard builder" (would have lost to Numerics) to "AI on-call partner" (Claude Desktop already does it) to *the bridge from Claude's intelligence to the surfaces Claude can't reach*. Three Apple ambient surfaces with theme-driven AI rendering at every layer is, as far as we found in two passes of competitor research, an unoccupied tuple.
 
-## Build log (clean git history, 16 commits)
+## Build log (clean git history, 50 commits)
 
 ```
+a842b37  chore: ship app icon, branding, signing team, and demo script polish
+866d829  feat(mcp): teach discover_data_source to default to the secure no-key path
+9af4055  feat(ios): "needs key" warning state + secure in-app key entry
+cbbc322  feat(server): "needs key" data-source state for safer Tier-2 discovery
+06de8af  docs: refresh README + add DEMO.md with 3-min recording script
+f7e25a6  fix(ios): only the active carousel page contributes its toolbar
+8479072  fix(ios): hoist background to RootView, cross-fade between dashboards
+e1d373e  perf(ios): kill carousel jank — lazy paging, image cache, instant snapshot
+9ceac0c  feat(ios): replace dashboard list with horizontal infinite carousel
+48442fa  feat(ios): per-dashboard background image with Liquid Glass cards
+739d578  test(ios): unit tests for FocusSmartPick
+b304ed0  feat(ios/widget): add Focus widget — pin one widget at full size, smart or configurable
+1527924  feat(ios/widget): add systemLarge + systemExtraLarge home-screen sizes
+86ba58d  feat(ios): fixed cell dimensions, drop screen-fill stretch
+a7db385  demo(server): add seed-many script — 8-widget dashboard for stress testing
+bf9e6b5  feat(ios): drag-to-resize the bento handle, with a dashed ghost preview
+c749e17  feat(ios): bento grid with iOS-style edit mode + sticky per-dashboard layout
+923d5aa  docs: add PROGRESS.md handoff doc for any future session
+d97bdc2  docs: add ARCHITECTURE.md — system diagrams, data flow, cost gate
+59905d0  docs(claude): refresh operational doc with what actually shipped
+c40fac7  test(ios): Codable coverage for Investigation + new SnapshotWidget fields
+818f9d6  test(server): unit tests for the Managed Agents investigator
+17fc1a2  test: extend E2E smoke to cover the investigation flow (16 assertions)
+c1cb95b  feat(ios): bentodeck:// deep links from widgets and Live Activities
+dde9e07  feat(server): read-side MCP tools (Claude can pull data BACK)
+a703f7a  feat(server): demo investigation seeder + tests for discoverer + seeder
+d0ac059  feat(ios): sparkline + trend badge in medium Home Screen widget
+b06f666  docs(readme): reflect Tier-2 discovery + Managed Agents + Live Activities
+a7cfcf7  docs: refresh SUBMISSION.md for the new capabilities
 1cef911  feat(server): Tier-2 — discover_data_source from any platform's docs
 6dc8d89  feat(ios): tap-anomaly → Managed Agents investigation deep-dive
 129c16a  feat(ios): Live Activities for anomalies — third Apple ambient surface
